@@ -4,7 +4,7 @@ import { useState } from "react";
 import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { Panel } from "../components/ui/Panel";
 import { PageHeader } from "../components/ui/PageHeader";
-import { apiGet, apiPost } from "../lib/api";
+import { apiGet, apiPost, extractErrorDetail } from "../lib/api";
 import { useToast } from "../features/feedback/ToastContext";
 import type { CreditPolicy } from "../lib/types";
 
@@ -29,8 +29,8 @@ export function CreditsPage() {
       showSuccess("Credits updated successfully.");
       await queryClient.invalidateQueries({ queryKey: ["credits-policy"] });
     },
-    onError: () => {
-      showError("Unable to adjust credits right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to adjust credits right now."));
     },
   });
 

@@ -5,7 +5,7 @@ import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { Panel } from "../components/ui/Panel";
 import { PageHeader } from "../components/ui/PageHeader";
 import { useToast } from "../features/feedback/ToastContext";
-import { apiGet, apiPost } from "../lib/api";
+import { apiGet, apiPost, extractErrorDetail } from "../lib/api";
 import type { RemoteConfig } from "../lib/types";
 
 export function RemoteConfigPage() {
@@ -43,8 +43,8 @@ export function RemoteConfigPage() {
       showSuccess("Remote config updated.");
       await queryClient.invalidateQueries({ queryKey: ["remote-config"] });
     },
-    onError: () => {
-      showError("Unable to update remote config right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to update remote config right now."));
     },
   });
 

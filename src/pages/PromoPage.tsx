@@ -6,7 +6,7 @@ import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { PaginationBar } from "../components/ui/PaginationBar";
 import { PageHeader } from "../components/ui/PageHeader";
-import { apiGet, apiPost } from "../lib/api";
+import { apiGet, apiPost, extractErrorDetail } from "../lib/api";
 import { useToast } from "../features/feedback/ToastContext";
 import {
   buildPaginatedPath,
@@ -78,8 +78,8 @@ export function PromoPage() {
       showSuccess("Promo code created successfully.");
       await queryClient.invalidateQueries({ queryKey: ["promo-codes"] });
     },
-    onError: () => {
-      showError("Unable to create promo code right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to create promo code right now."));
     },
   });
   const deactivateMutation = useMutation({
@@ -89,8 +89,8 @@ export function PromoPage() {
       showSuccess("Promo code deactivated.");
       await queryClient.invalidateQueries({ queryKey: ["promo-codes"] });
     },
-    onError: () => {
-      showError("Unable to deactivate promo code right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to deactivate promo code right now."));
     },
   });
   const bulkDeactivateMutation = useMutation({
@@ -103,8 +103,8 @@ export function PromoPage() {
       showSuccess(`Deactivated ${result.affected} promo codes.`);
       await queryClient.invalidateQueries({ queryKey: ["promo-codes"] });
     },
-    onError: () => {
-      showError("Unable to bulk deactivate promo codes right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to bulk deactivate promo codes right now."));
     },
   });
 

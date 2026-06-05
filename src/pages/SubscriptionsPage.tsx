@@ -6,7 +6,7 @@ import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { PaginationBar } from "../components/ui/PaginationBar";
 import { PageHeader } from "../components/ui/PageHeader";
-import { apiGet, apiPost } from "../lib/api";
+import { apiGet, apiPost, extractErrorDetail } from "../lib/api";
 import { useToast } from "../features/feedback/ToastContext";
 import { formatDateTime } from "../lib/formatters";
 import {
@@ -77,8 +77,8 @@ export function SubscriptionsPage() {
       showSuccess("Subscription granted successfully.");
       await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
-    onError: () => {
-      showError("Unable to grant subscription right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to grant subscription right now."));
     },
   });
   const revokeMutation = useMutation({
@@ -88,8 +88,8 @@ export function SubscriptionsPage() {
       showSuccess("Subscription revoked.");
       await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
-    onError: () => {
-      showError("Unable to revoke subscription right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to revoke subscription right now."));
     },
   });
   const deleteMutation = useMutation({
@@ -99,8 +99,8 @@ export function SubscriptionsPage() {
       showSuccess("Subscription deleted.");
       await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
-    onError: () => {
-      showError("Unable to delete subscription right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to delete subscription right now."));
     },
   });
   const bulkRevokeMutation = useMutation({
@@ -113,8 +113,8 @@ export function SubscriptionsPage() {
       showSuccess(`Revoked ${result.affected} subscriptions.`);
       await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
-    onError: () => {
-      showError("Unable to bulk revoke subscriptions right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to bulk revoke subscriptions right now."));
     },
   });
 

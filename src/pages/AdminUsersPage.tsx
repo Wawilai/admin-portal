@@ -6,7 +6,7 @@ import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { PaginationBar } from "../components/ui/PaginationBar";
 import { PageHeader } from "../components/ui/PageHeader";
 import { useToast } from "../features/feedback/ToastContext";
-import { apiGet, apiPost } from "../lib/api";
+import { apiGet, apiPost, extractErrorDetail } from "../lib/api";
 import { formatDateTime } from "../lib/formatters";
 import {
   buildPaginatedPath,
@@ -90,8 +90,8 @@ export function AdminUsersPage() {
       showSuccess("Admin user created successfully.");
       await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
-    onError: () => {
-      showError("Unable to create admin user right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to create admin user right now."));
     },
   });
 
@@ -103,8 +103,8 @@ export function AdminUsersPage() {
       showSuccess("Admin password updated.");
       await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
-    onError: () => {
-      showError("Unable to update admin password right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to update admin password right now."));
     },
   });
 
@@ -115,8 +115,8 @@ export function AdminUsersPage() {
       showSuccess("Admin user deleted.");
       await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
-    onError: () => {
-      showError("Unable to delete admin user right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to delete admin user right now."));
     },
   });
 

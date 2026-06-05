@@ -13,12 +13,26 @@ function notifyUnauthorized() {
 
 export class ApiError extends Error {
   status: number;
+  detail: string;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, detail = "") {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.detail = detail;
   }
+}
+
+async function extractDetail(response: Response): Promise<string> {
+  try {
+    const data = (await response.clone().json()) as { detail?: unknown };
+    if (typeof data?.detail === "string" && data.detail.trim()) {
+      return data.detail.trim();
+    }
+  } catch {
+    // non-JSON body — ignore
+  }
+  return "";
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
@@ -33,7 +47,8 @@ export async function apiGet<T>(path: string): Promise<T> {
     if (response.status === 401) {
       notifyUnauthorized();
     }
-    throw new ApiError(`GET ${path} failed`, response.status);
+    const detail = await extractDetail(response);
+    throw new ApiError(`GET ${path} failed`, response.status, detail);
   }
 
   return (await response.json()) as T;
@@ -59,10 +74,19 @@ export async function apiPost<T>(
     if (response.status === 401) {
       notifyUnauthorized();
     }
-    throw new ApiError(`${method} ${path} failed`, response.status);
+    const detail = await extractDetail(response);
+    throw new ApiError(`${method} ${path} failed`, response.status, detail);
   }
 
   return (await response.json()) as T;
+}
+
+/** Extract the `detail` string from an ApiError, or fall back to a default message. */
+export function extractErrorDetail(error: unknown, fallback: string): string {
+  if (error instanceof ApiError && error.detail) {
+    return error.detail;
+  }
+  return fallback;
 }
 
 export { API_BASE_URL };

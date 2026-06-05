@@ -5,7 +5,7 @@ import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { Panel } from "../components/ui/Panel";
 import { PageHeader } from "../components/ui/PageHeader";
 import { useToast } from "../features/feedback/ToastContext";
-import { apiGet, apiPost } from "../lib/api";
+import { apiGet, apiPost, extractErrorDetail } from "../lib/api";
 import type { AiConfig } from "../lib/types";
 
 export function AiOpsPage() {
@@ -40,8 +40,8 @@ export function AiOpsPage() {
       showSuccess("AI configuration updated.");
       await queryClient.invalidateQueries({ queryKey: ["ai-config"] });
     },
-    onError: () => {
-      showError("Unable to update AI configuration right now.");
+    onError: (error) => {
+      showError(extractErrorDetail(error, "Unable to update AI configuration right now."));
     },
   });
 

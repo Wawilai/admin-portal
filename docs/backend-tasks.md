@@ -14,7 +14,7 @@ Ship the first production-ready `admin-api` endpoints needed by the React admin 
 - [x] Add `GET /admin-api/users`
 - [x] Add `GET /admin-api/users/{user_id}`
 - [x] Include the new router in `astro_engine/api/main.py`
-- [ ] Normalize API errors to JSON with clear `detail` messages
+- [x] Normalize API errors to JSON with clear `detail` messages
 
 ## Phase 1.1
 
@@ -46,8 +46,8 @@ Ship the first production-ready `admin-api` endpoints needed by the React admin 
 - [x] Add role information to the session model or an admin session lookup
 - [x] Add permission checks for current `admin-api` endpoints
 - [x] Add CSRF strategy for cookie-authenticated admin mutations
-- [ ] Add audit log writes for all future write endpoints
-  Current state: login/logout plus current `admin-api` write actions for credits, subscriptions, and promo are written to `admin_audit_log`. Legacy HTML admin writes are not yet covered.
+- [x] Add audit log writes for all future write endpoints
+  Legacy HTML admin portal retired — admin.py rewritten as pure helper module, HTML routes removed. All writes go through admin_api.py which already covers audit logging.
 
 ## Done Criteria For Backend MVP
 
