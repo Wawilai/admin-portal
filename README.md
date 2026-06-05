@@ -38,6 +38,30 @@ npm install
 npm run dev
 ```
 
+## Railway Deploy Notes
+
+When deploying the portal separately from the FastAPI backend, set these variables before building:
+
+Frontend service:
+
+```text
+VITE_ADMIN_API_BASE_URL=https://<your-backend-domain>/admin-api
+VITE_APP_ENV=production
+```
+
+Backend service:
+
+```text
+ALLOWED_ORIGINS=https://<your-frontend-domain>
+ADMIN_SESSION_COOKIE_SAMESITE=none
+ADMIN_SESSION_COOKIE_SECURE=true
+```
+
+The portal sends authenticated requests with `credentials: include`, so cross-domain admin login will fail unless the backend both:
+
+- allows the frontend origin in CORS
+- returns a `Secure` cookie with `SameSite=None`
+
 ## Suggested Backend Pairing
 
 Use this portal with new FastAPI JSON routes under:

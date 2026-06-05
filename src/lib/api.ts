@@ -1,5 +1,25 @@
-const API_BASE_URL =
-  import.meta.env.VITE_ADMIN_API_BASE_URL ?? "http://localhost:8900/admin-api";
+function resolveApiBaseUrl() {
+  const configured = import.meta.env.VITE_ADMIN_API_BASE_URL?.trim();
+  if (configured) {
+    return configured.replace(/\/+$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    const { hostname } = window.location;
+    const isLocalHost =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "[::1]";
+
+    if (!isLocalHost) {
+      return "/admin-api";
+    }
+  }
+
+  return "http://localhost:8900/admin-api";
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 let csrfToken = "";
 export const ADMIN_UNAUTHORIZED_EVENT = "admin-api-unauthorized";
 
