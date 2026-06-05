@@ -2,14 +2,17 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { ApiError } from "../lib/api";
 import { useSession } from "../features/auth/SessionContext";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, signIn } = useSession();
-  const [email, setEmail] = useState("ops@example.com");
+  const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("demo-password");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const nextPath =
     (location.state as { from?: { pathname?: string } } | null)?.from
@@ -23,9 +26,25 @@ export function LoginPage() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void password;
-    signIn(email);
-    navigate(nextPath, { replace: true });
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    void (async () => {
+      try {
+        await signIn(username, password);
+        navigate(nextPath, { replace: true });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          setErrorMessage("Username or password is incorrect.");
+        } else if (error instanceof ApiError && error.status === 429) {
+          setErrorMessage("Too many login attempts. Please try again later.");
+        } else {
+          setErrorMessage("Unable to sign in right now.");
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
   };
 
   return (
@@ -40,10 +59,10 @@ export function LoginPage() {
         <form className="login-form" onSubmit={handleSubmit}>
           <input
             className="text-input"
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Email"
-            type="email"
-            value={email}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder="Username"
+            type="text"
+            value={username}
           />
           <input
             className="text-input"
@@ -52,13 +71,14 @@ export function LoginPage() {
             type="password"
             value={password}
           />
-          <button className="primary-button wide" type="submit">
-            Sign in
+          {errorMessage ? <div className="form-error">{errorMessage}</div> : null}
+          <button className="primary-button wide" disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
         </form>
         <div className="login-note">
-          Demo scaffold: the local auth shell stores a session in browser
-          storage until the backend `admin-api` session is wired in.
+          This login now expects the backend admin session and `admin-api`
+          routes to be running on the configured API base URL.
         </div>
       </div>
     </div>

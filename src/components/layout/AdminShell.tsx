@@ -3,15 +3,36 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useSession } from "../../features/auth/SessionContext";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: "DB" },
-  { to: "/users", label: "Users", icon: "US" },
-  { to: "/credits", label: "Credits", icon: "CR" },
-  { to: "/subscriptions", label: "Subscriptions", icon: "SU" },
-  { to: "/promo", label: "Promo", icon: "PR" },
-  { to: "/ai-ops", label: "AI Ops", icon: "AI" },
-  { to: "/notifications", label: "Notifications", icon: "NT" },
-  { to: "/remote-config", label: "Remote Config", icon: "RC" },
-  { to: "/audit-log", label: "Audit Log", icon: "AL" },
+  { to: "/", label: "Dashboard", icon: "DB", permission: "dashboard.read" },
+  { to: "/users", label: "Users", icon: "US", permission: "users.read" },
+  { to: "/credits", label: "Credits", icon: "CR", permission: "credits.read" },
+  {
+    to: "/subscriptions",
+    label: "Subscriptions",
+    icon: "SU",
+    permission: "subscriptions.read",
+  },
+  { to: "/promo", label: "Promo", icon: "PR", permission: "promo.read" },
+  { to: "/ai-ops", label: "AI Ops", icon: "AI", permission: "dashboard.read" },
+  {
+    to: "/notifications",
+    label: "Notifications",
+    icon: "NT",
+    permission: "notifications.read",
+  },
+  {
+    to: "/remote-config",
+    label: "Remote Config",
+    icon: "RC",
+    permission: "config.read",
+  },
+  { to: "/audit-log", label: "Audit Log", icon: "AL", permission: "audit.read" },
+  {
+    to: "/admin-users",
+    label: "Admin Users",
+    icon: "AU",
+    permission: "admin_users.read",
+  },
 ];
 
 function formatActiveLabel(pathname: string) {
@@ -26,10 +47,28 @@ function formatActiveLabel(pathname: string) {
   return lastSegment ? lastSegment.replace(/-/g, " ") : "Dashboard";
 }
 
+function resolveEnvironmentLabel() {
+  const rawValue = (
+    import.meta.env.VITE_APP_ENV ??
+    import.meta.env.MODE ??
+    "local"
+  ).toString().toLowerCase();
+
+  if (rawValue.includes("prod")) {
+    return { label: "Production", tone: "production" as const };
+  }
+  if (rawValue.includes("stage")) {
+    return { label: "Staging", tone: "staging" as const };
+  }
+  return { label: "Local", tone: "local" as const };
+}
+
 export function AdminShell() {
   const location = useLocation();
-  const { signOut, user } = useSession();
+  const { hasPermission, signOut, user } = useSession();
+  const visibleNavItems = navItems.filter((item) => hasPermission(item.permission));
   const activeLabel = formatActiveLabel(location.pathname);
+  const environment = resolveEnvironmentLabel();
 
   return (
     <div className="admin-app">
@@ -43,7 +82,7 @@ export function AdminShell() {
         </div>
 
         <nav className="sidebar-nav">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -72,16 +111,24 @@ export function AdminShell() {
           </div>
 
           <div className="topbar-actions">
+            <div className={`environment-badge tone-${environment.tone}`}>
+              {environment.label}
+            </div>
             <div className="operator-chip">
               <div className="operator-name">{user?.displayName}</div>
               <div className="operator-role">{user?.role}</div>
             </div>
+            {!hasPermission("dashboard.read") ? (
+              <div className="permission-badge">Limited access</div>
+            ) : null}
             <button className="ghost-button" type="button">
               Preview API State
             </button>
-            <button className="primary-button" type="button">
-              Incident Mode
-            </button>
+            {hasPermission("config.write") ? (
+              <button className="primary-button" type="button">
+                Incident Mode
+              </button>
+            ) : null}
             <button className="ghost-button" onClick={signOut} type="button">
               Sign out
             </button>

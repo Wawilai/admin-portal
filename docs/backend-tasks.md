@@ -18,12 +18,21 @@ Ship the first production-ready `admin-api` endpoints needed by the React admin 
 
 ## Phase 1.1
 
-- [ ] Add `GET /admin-api/credits/policy`
-- [ ] Add `GET /admin-api/subscriptions`
-- [ ] Add `GET /admin-api/promo/codes`
-- [ ] Add `GET /admin-api/audit-log`
-- [ ] Add pagination query params for list endpoints
+- [x] Add `GET /admin-api/credits/policy`
+- [x] Add `GET /admin-api/subscriptions`
+- [x] Add `GET /admin-api/promo/codes`
+- [x] Add `GET /admin-api/audit-log`
+- [x] Add pagination query params for list endpoints
 - [x] Add search support for `/admin-api/users`
+- [x] Add `GET /admin-api/ai/config`
+- [x] Add `PATCH /admin-api/ai/config`
+- [x] Add `GET /admin-api/config`
+- [x] Add `PATCH /admin-api/config`
+- [x] Add `GET /admin-api/admin-users`
+- [x] Add `POST /admin-api/admin-users`
+- [x] Add `POST /admin-api/admin-users/{user_id}/password`
+- [x] Add `DELETE /admin-api/admin-users/{user_id}`
+- [x] Add bulk mutation endpoints for high-volume ops flows
 
 ## Data Tasks
 
@@ -34,10 +43,11 @@ Ship the first production-ready `admin-api` endpoints needed by the React admin 
 
 ## Security Tasks
 
-- [ ] Add role information to the session model or an admin session lookup
-- [ ] Add permission checks for unsafe endpoints
-- [ ] Add CSRF strategy for cookie-authenticated admin mutations
+- [x] Add role information to the session model or an admin session lookup
+- [x] Add permission checks for current `admin-api` endpoints
+- [x] Add CSRF strategy for cookie-authenticated admin mutations
 - [ ] Add audit log writes for all future write endpoints
+  Current state: login/logout plus current `admin-api` write actions for credits, subscriptions, and promo are written to `admin_audit_log`. Legacy HTML admin writes are not yet covered.
 
 ## Done Criteria For Backend MVP
 

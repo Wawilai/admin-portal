@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import {
   Area,
   AreaChart,
@@ -8,12 +9,31 @@ import {
   YAxis,
 } from "recharts";
 
+import { LoadingSkeleton } from "../components/ui/LoadingSkeleton";
 import { Panel } from "../components/ui/Panel";
 import { PageHeader } from "../components/ui/PageHeader";
 import { StatCard } from "../components/ui/StatCard";
-import { dashboardOverview, usageTrend } from "../lib/demo-data";
+import { apiGet } from "../lib/api";
+import type { DashboardOverview } from "../lib/types";
+
+const usageTrend = [
+  { label: "Mon", total: 5100, dream: 920, horoscope: 1810, companion: 1120 },
+  { label: "Tue", total: 5480, dream: 1010, horoscope: 1960, companion: 1204 },
+  { label: "Wed", total: 5905, dream: 1140, horoscope: 2085, companion: 1288 },
+  { label: "Thu", total: 5722, dream: 1074, horoscope: 2011, companion: 1194 },
+  { label: "Fri", total: 6170, dream: 1223, horoscope: 2214, companion: 1320 },
+  { label: "Sat", total: 6033, dream: 1160, horoscope: 2170, companion: 1305 },
+  { label: "Sun", total: 6450, dream: 1290, horoscope: 2340, companion: 1412 },
+];
 
 export function DashboardPage() {
+  const overviewQuery = useQuery({
+    queryKey: ["dashboard-overview"],
+    queryFn: () => apiGet<DashboardOverview>("/dashboard/overview"),
+  });
+
+  const overview = overviewQuery.data;
+
   return (
     <>
       <PageHeader
@@ -21,21 +41,40 @@ export function DashboardPage() {
         subtitle="Command view for the app economy: AI usage, user access, risk, and operator action."
       />
 
+      {overviewQuery.isLoading && !overviewQuery.data ? (
+        <LoadingSkeleton lines={5} title="Loading dashboard overview" />
+      ) : null}
+
+      {overviewQuery.isError ? (
+        <div className="inline-alert">
+          Live dashboard data is unavailable right now. Refresh to try again.
+          <div className="top-gap">
+            <button
+              className="ghost-button compact-button"
+              onClick={() => overviewQuery.refetch()}
+              type="button"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="stats-grid">
-        <StatCard label="AI Calls Today" value={`${dashboardOverview.aiCallsToday}`} />
+        <StatCard label="AI Calls Today" value={`${overview?.aiCallsToday ?? "-"}`} />
         <StatCard
           label="AI Calls This Month"
-          value={`${dashboardOverview.aiCallsMonth}`}
+          value={`${overview?.aiCallsMonth ?? "-"}`}
           tone="blue"
         />
         <StatCard
           label="Active Subscriptions"
-          value={`${dashboardOverview.activeSubscriptions}`}
+          value={`${overview?.activeSubscriptions ?? "-"}`}
           tone="green"
         />
         <StatCard
           label="Credits Exhausted Today"
-          value={`${dashboardOverview.creditsExhaustedToday}`}
+          value={`${overview?.creditsExhaustedToday ?? "-"}`}
           tone="amber"
         />
       </div>
@@ -77,15 +116,21 @@ export function DashboardPage() {
           <div className="health-list">
             <div className="health-row">
               <span>Database</span>
-              <span className="badge ok">{dashboardOverview.dbStatus}</span>
+              <span className={`badge ${overview?.dbStatus === "ok" ? "ok" : "warn"}`}>
+                {overview?.dbStatus ?? "unknown"}
+              </span>
             </div>
             <div className="health-row">
               <span>AI Provider</span>
-              <span className="badge warn">{dashboardOverview.aiStatus}</span>
+              <span className={`badge ${overview?.aiStatus === "ok" ? "ok" : "warn"}`}>
+                {overview?.aiStatus ?? "unknown"}
+              </span>
             </div>
             <div className="health-row">
               <span>Push Delivery</span>
-              <span className="badge ok">{dashboardOverview.pushStatus}</span>
+              <span className={`badge ${overview?.pushStatus === "ok" ? "ok" : "warn"}`}>
+                {overview?.pushStatus ?? "unknown"}
+              </span>
             </div>
           </div>
         </Panel>
@@ -93,4 +138,3 @@ export function DashboardPage() {
     </>
   );
 }
-

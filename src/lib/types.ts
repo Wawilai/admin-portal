@@ -6,6 +6,26 @@ export type AdminRole =
   | "marketing_admin"
   | "analyst";
 
+export interface AdminSessionUser {
+  id: string;
+  email: string;
+  displayName: string;
+  role: AdminRole;
+}
+
+export interface AuthMeResponse {
+  user: AdminSessionUser;
+  permissions: string[];
+  csrfToken: string;
+}
+
+export interface PaginatedResponse<T> {
+  page: number;
+  pageSize: number;
+  total: number;
+  items: T[];
+}
+
 export interface DashboardOverview {
   aiCallsToday: number;
   aiCallsMonth: number;
@@ -15,6 +35,19 @@ export interface DashboardOverview {
   dbStatus: HealthStatus;
   aiStatus: HealthStatus;
   pushStatus: HealthStatus;
+}
+
+export interface AiConfig {
+  currentModel: string;
+  availableModels: string[];
+  hasApiKey: boolean;
+  maskedApiKey: string;
+}
+
+export interface RemoteConfig {
+  storeUrlAndroid: string;
+  storeUrlIos: string;
+  storeUrlWeb: string;
 }
 
 export interface TrendPoint {
@@ -28,18 +61,18 @@ export interface TrendPoint {
 export interface UserSummary {
   userId: string;
   email: string;
-  tier: "free" | "trial" | "premium";
+  tier: string;
   credits: number;
   remainingToday: number;
   lastActiveAt: string;
-  locale: "th" | "zh";
+  locale: string;
 }
 
 export interface UserDetail {
   userId: string;
   email: string;
-  locale: "th" | "zh";
-  tier: "free" | "trial" | "premium";
+  locale: string;
+  tier: string;
   credits: number;
   remainingToday: number;
   zodiac: string;
@@ -48,24 +81,41 @@ export interface UserDetail {
   promoCodes: string[];
   devices: { label: string; lastSeenAt: string }[];
   recentUsage: { feature: string; count: number }[];
+  subscriptionExpiresAt?: string | null;
+  subscriptionRows?: Array<Record<string, unknown>>;
+  lastActiveAt?: string | null;
 }
 
 export interface CreditPolicy {
   freeDailyBase: number;
   usersWithCredits: number;
   totalBalance: number;
+  activeToday?: number;
+  creditsExhaustedToday?: number;
+  items?: CreditRow[];
+}
+
+export interface CreditRow {
+  userId: string;
+  balance: number;
+  usedToday: number;
+  remainingToday: number;
+  updatedAt: string;
+  locked: boolean;
 }
 
 export interface SubscriptionRow {
   userId: string;
   email: string;
-  source: "manual" | "promo" | "trial" | "android" | "ios";
-  tier: "free" | "trial" | "premium";
+  source: string;
+  tier: string;
   expiresAt: string;
   active: boolean;
+  daysLeft?: number;
 }
 
 export interface PromoCodeRow {
+  id?: number;
   code: string;
   rewardLabel: string;
   usedCount: number;
@@ -83,3 +133,9 @@ export interface AuditRow {
   createdAt: string;
 }
 
+export interface AdminUserRow {
+  id: number;
+  username: string;
+  role: AdminRole;
+  createdAt: string;
+}

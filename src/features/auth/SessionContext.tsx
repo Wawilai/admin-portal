@@ -1,73 +1,124 @@
 import type { PropsWithChildren } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import type { AdminRole } from "../../lib/types";
-
-const SESSION_STORAGE_KEY = "rerkdee-admin-session";
-
-export interface SessionUser {
-  id: string;
-  email: string;
-  displayName: string;
-  role: AdminRole;
-}
+import {
+  ADMIN_UNAUTHORIZED_EVENT,
+  ApiError,
+  apiGet,
+  apiPost,
+  setApiCsrfToken,
+} from "../../lib/api";
+import type { AdminSessionUser, AuthMeResponse } from "../../lib/types";
 
 interface SessionContextValue {
   isAuthenticated: boolean;
   isBootstrapping: boolean;
-  user: SessionUser | null;
-  signIn: (email: string) => void;
-  signOut: () => void;
+  bootstrapFailed: boolean;
+  defaultRoute: string;
+  hasPermission: (permission: string) => boolean;
+  permissions: string[];
+  user: AdminSessionUser | null;
+  signIn: (username: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
-
-function buildDemoUser(email: string): SessionUser {
-  return {
-    id: "admin_demo",
-    email,
-    displayName: "Operations Lead",
-    role: "super_admin",
-  };
-}
+const permissionRouteOrder = [
+  { permission: "dashboard.read", route: "/" },
+  { permission: "users.read", route: "/users" },
+  { permission: "credits.read", route: "/credits" },
+  { permission: "subscriptions.read", route: "/subscriptions" },
+  { permission: "promo.read", route: "/promo" },
+  { permission: "audit.read", route: "/audit-log" },
+  { permission: "admin_users.read", route: "/admin-users" },
+];
 
 export function SessionProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<SessionUser | null>(null);
+  const [user, setUser] = useState<AdminSessionUser | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [bootstrapFailed, setBootstrapFailed] = useState(false);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    const handleUnauthorized = () => {
+      setUser(null);
+      setPermissions([]);
+      setApiCsrfToken("");
+    };
 
-    if (raw) {
+    window.addEventListener(ADMIN_UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => {
+      window.removeEventListener(ADMIN_UNAUTHORIZED_EVENT, handleUnauthorized);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const bootstrap = async () => {
       try {
-        setUser(JSON.parse(raw) as SessionUser);
-      } catch {
-        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+        const result = await apiGet<AuthMeResponse>("/auth/me");
+        if (isMounted) {
+          setUser(result.user);
+          setPermissions(result.permissions);
+          setApiCsrfToken(result.csrfToken);
+        }
+      } catch (error) {
+        const isUnauthenticated =
+          error instanceof ApiError &&
+          (error.status === 401 || error.status === 403);
+        if (!isUnauthenticated) {
+          console.error("Failed to bootstrap admin session", error);
+        }
+        if (isMounted) {
+          setUser(null);
+          setPermissions([]);
+          setApiCsrfToken("");
+          setBootstrapFailed(!isUnauthenticated);
+        }
+      } finally {
+        if (isMounted) {
+          setIsBootstrapping(false);
+        }
       }
-    }
+    };
 
-    setIsBootstrapping(false);
+    void bootstrap();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const value = useMemo<SessionContextValue>(
     () => ({
       isAuthenticated: user !== null,
       isBootstrapping,
+      bootstrapFailed,
+      defaultRoute:
+        permissionRouteOrder.find(
+          (item) =>
+            permissions.includes("*") || permissions.includes(item.permission),
+        )?.route ?? "/login",
+      hasPermission: (permission: string) =>
+        permissions.includes("*") || permissions.includes(permission),
+      permissions,
       user,
-      signIn: (email: string) => {
-        const nextUser = buildDemoUser(email);
-        window.localStorage.setItem(
-          SESSION_STORAGE_KEY,
-          JSON.stringify(nextUser),
-        );
-        setUser(nextUser);
+      signIn: async (username: string, password: string) => {
+        await apiPost<{ ok: boolean }>("/auth/login", { username, password });
+        const result = await apiGet<AuthMeResponse>("/auth/me");
+        setUser(result.user);
+        setPermissions(result.permissions);
+        setApiCsrfToken(result.csrfToken);
       },
-      signOut: () => {
-        window.localStorage.removeItem(SESSION_STORAGE_KEY);
+      signOut: async () => {
+        await apiPost<{ ok: boolean }>("/auth/logout", {});
         setUser(null);
+        setPermissions([]);
+        setApiCsrfToken("");
       },
     }),
-    [isBootstrapping, user],
+    [bootstrapFailed, isBootstrapping, permissions, user],
   );
 
   return (

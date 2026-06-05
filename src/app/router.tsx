@@ -2,7 +2,9 @@ import { createBrowserRouter } from "react-router-dom";
 
 import { AdminShell } from "../components/layout/AdminShell";
 import { RequireAuth } from "../features/auth/RequireAuth";
+import { RequirePermission } from "../features/auth/RequirePermission";
 import { AiOpsPage } from "../pages/AiOpsPage";
+import { AdminUsersPage } from "../pages/AdminUsersPage";
 import { AuditLogPage } from "../pages/AuditLogPage";
 import { CreditsPage } from "../pages/CreditsPage";
 import { DashboardPage } from "../pages/DashboardPage";
@@ -26,16 +28,49 @@ export const router = createBrowserRouter([
         path: "/",
         element: <AdminShell />,
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: "users", element: <UsersPage /> },
-          { path: "users/:userId", element: <UserDetailPage /> },
-          { path: "credits", element: <CreditsPage /> },
-          { path: "subscriptions", element: <SubscriptionsPage /> },
-          { path: "promo", element: <PromoPage /> },
-          { path: "ai-ops", element: <AiOpsPage /> },
-          { path: "notifications", element: <NotificationsPage /> },
-          { path: "remote-config", element: <RemoteConfigPage /> },
-          { path: "audit-log", element: <AuditLogPage /> },
+          {
+            element: <RequirePermission permission="dashboard.read" />,
+            children: [{ index: true, element: <DashboardPage /> }],
+          },
+          {
+            element: <RequirePermission permission="users.read" />,
+            children: [
+              { path: "users", element: <UsersPage /> },
+              { path: "users/:userId", element: <UserDetailPage /> },
+            ],
+          },
+          {
+            element: <RequirePermission permission="credits.read" />,
+            children: [{ path: "credits", element: <CreditsPage /> }],
+          },
+          {
+            element: <RequirePermission permission="subscriptions.read" />,
+            children: [{ path: "subscriptions", element: <SubscriptionsPage /> }],
+          },
+          {
+            element: <RequirePermission permission="promo.read" />,
+            children: [{ path: "promo", element: <PromoPage /> }],
+          },
+          {
+            element: <RequirePermission permission="dashboard.read" />,
+            children: [{ path: "ai-ops", element: <AiOpsPage /> }],
+          },
+          {
+            element: <RequirePermission permission="notifications.read" />,
+            children: [{ path: "notifications", element: <NotificationsPage /> }],
+          },
+          {
+            element: <RequirePermission permission="config.read" />,
+            children: [{ path: "remote-config", element: <RemoteConfigPage /> }],
+          },
+          {
+            element: <RequirePermission permission="audit.read" />,
+            children: [{ path: "audit-log", element: <AuditLogPage /> }],
+          },
+          {
+            element: <RequirePermission permission="admin_users.read" />,
+            children: [{ path: "admin-users", element: <AdminUsersPage /> }],
+          },
         ],
       },
     ],

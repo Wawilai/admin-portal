@@ -194,8 +194,8 @@ admin_portal/
       auth/
     lib/
       api.ts
+      formatters.ts
       types.ts
-      demo-data.ts
     pages/
     styles.css
 ```
@@ -205,7 +205,7 @@ admin_portal/
 - `app/` owns bootstrap, providers, and routing
 - `components/` contains reusable shell and UI primitives
 - `features/auth/` owns session state and route guards
-- `lib/` contains API client, shared types, and temporary demo fixtures
+- `lib/` contains API client, shared types, and formatting helpers
 - `pages/` contains route-level screens
 
 ## Authentication Model
