@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { InlineAlert } from "@/components/ui-portal";
@@ -36,16 +36,33 @@ function LoginPage() {
     usernameRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    if (!isBootstrapping && isAuthenticated) {
-      if (window.location.pathname !== defaultRoute) {
-        window.location.replace(defaultRoute);
-      }
-    }
-  }, [defaultRoute, isAuthenticated, isBootstrapping]);
-
   if (!isBootstrapping && isAuthenticated) {
-    return null;
+    return (
+      <div className="relative flex min-h-screen flex-col bg-background">
+        <main className="relative z-10 flex flex-1 items-center justify-center px-4 pb-16">
+          <div className="w-full max-w-[420px] rounded-lg border border-border bg-card/60 p-6 backdrop-blur">
+            <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Session active
+            </div>
+            <h1 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
+              You are already signed in
+            </h1>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              Continue to the admin portal or sign out from another tab if you need a different account.
+            </p>
+            <div className="mt-5">
+              <Link
+                to={defaultRoute}
+                className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Continue
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   function detectCapsLock(e: React.KeyboardEvent<HTMLInputElement>) {
