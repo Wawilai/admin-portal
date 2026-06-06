@@ -38,7 +38,9 @@ function LoginPage() {
 
   useEffect(() => {
     if (!isBootstrapping && isAuthenticated) {
-      window.location.replace(defaultRoute);
+      if (window.location.pathname !== defaultRoute) {
+        window.location.replace(defaultRoute);
+      }
     }
   }, [defaultRoute, isAuthenticated, isBootstrapping]);
 
@@ -63,7 +65,9 @@ function LoginPage() {
     setLoading(true);
     try {
       await signIn(username.trim(), password);
-      window.location.replace(defaultRoute);
+      if (window.location.pathname !== defaultRoute) {
+        window.location.replace(defaultRoute);
+      }
     } catch (err) {
       setError(extractErrorDetail(err, "Sign-in failed. Please try again."));
     } finally {

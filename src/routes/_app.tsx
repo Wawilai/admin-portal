@@ -38,7 +38,9 @@ function AppShell() {
 
   useEffect(() => {
     if (!bootstrapFailed && !isBootstrapping && !isAuthenticated) {
-      window.location.replace("/login");
+      if (window.location.pathname !== "/login") {
+        window.location.replace("/login");
+      }
       return;
     }
 
@@ -47,7 +49,9 @@ function AppShell() {
       requiredPermission &&
       !hasPermission(requiredPermission)
     ) {
-      window.location.replace(defaultRoute);
+      if (window.location.pathname !== defaultRoute) {
+        window.location.replace(defaultRoute);
+      }
     }
   }, [
     bootstrapFailed,

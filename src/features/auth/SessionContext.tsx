@@ -94,7 +94,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         permissionRouteOrder.find(
           (item) =>
             permissions.includes("*") || permissions.includes(item.permission),
-        )?.route ?? "/login",
+        )?.route ?? "/",
       hasPermission: (permission: string) =>
         permissions.includes("*") || permissions.includes(permission),
       signIn: async (username: string, password: string) => {
