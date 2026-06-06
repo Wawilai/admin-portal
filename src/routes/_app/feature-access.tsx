@@ -16,15 +16,15 @@ import { apiGet, apiWrite, extractErrorDetail } from "@/lib/api";
 import type { RemoteConfig } from "@/lib/types";
 
 const FEATURE_ROWS = [
-  { key: "compat", label: "Compatibility", description: "Client compatibility checks and upgrade gates." },
-  { key: "horoscope", label: "Daily Horoscope", description: "Daily horoscope reading and analysis." },
-  { key: "dream", label: "Dream Interpretation", description: "Dream meaning and symbolic interpretation." },
-  { key: "lagna", label: "Lagna Prophecy", description: "Lagna-based personalized fortune feature." },
-  { key: "brahma", label: "Brahma Chati", description: "Traditional Brahma Chati prediction flows." },
-  { key: "annual", label: "Annual Fortune", description: "Yearly horoscope and life direction forecast." },
-  { key: "companion.ai", label: "AI Companion", description: "Interactive chat and guided companion experience." },
-  { key: "zodiac_weekly", label: "Zodiac Weekly", description: "Weekly zodiac forecast and highlights." },
-  { key: "cosmic_card", label: "Cosmic Card", description: "Card-based guidance and symbolic reading." },
+  { key: "horoscope",     label: "ดูดวงประจำวัน",         description: "ดูดวงรายวันตามราศีและโหราศาสตร์ไทย" },
+  { key: "dream",         label: "ทำนายฝัน",              description: "ตีความฝันด้วย AI และสัญลักษณ์โหราศาสตร์" },
+  { key: "lagna",         label: "ลัคนาพยากรณ์",          description: "พยากรณ์ส่วนตัวตามลัคนาราศีเกิด" },
+  { key: "brahma",        label: "ตำราพรหมชาติ",          description: "พยากรณ์แบบดั้งเดิมตามตำราพรหมชาติ" },
+  { key: "annual",        label: "ดวงชะตาปี",             description: "ดูดวงรายปีและทิศทางชีวิต" },
+  { key: "compat",        label: "ดูสมพงศ์คู่ครอง",       description: "เปรียบเทียบธาตุและนักษัตรระหว่างสองคน" },
+  { key: "companion.ai",  label: "AI Companion",          description: "แชทและคำแนะนำส่วนตัวจาก AI (ใช้ credit)" },
+  { key: "zodiac_weekly", label: "ดวงนักษัตรรายสัปดาห์",  description: "ดูดวงนักษัตรประจำสัปดาห์ทั้ง 12 ราศี" },
+  { key: "cosmic_card",   label: "ไพ่พยากรณ์",            description: "เปิดไพ่ 1 ใบ หรือ 3 ใบเพื่อดูแนวโน้ม" },
 ] as const;
 
 type AccessTier = "free" | "trial" | "premium";
