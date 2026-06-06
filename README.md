@@ -64,6 +64,14 @@ VITE_ADMIN_API_BASE_URL=https://rerkdee-api-production.up.railway.app/admin-api
 VITE_APP_ENV=production
 ```
 
+Railway build/runtime notes:
+
+- builder uses `npm ci`
+- build is forced to Nitro `node-server`
+- runtime starts with `node .output/server/index.mjs`
+- Railway should expose `PORT`; Nitro will bind from `PORT`
+- `VITE_ADMIN_API_BASE_URL` and `VITE_APP_ENV` must be present at build time
+
 Backend service:
 
 ```text
