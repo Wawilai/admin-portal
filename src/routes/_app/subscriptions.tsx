@@ -1,12 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, Search } from "lucide-react";
+
 import {
-  StatTile,
+  EmptyState,
+  InlineAlert,
+  LoadingSkeleton,
   PageHeader,
+  Pagination,
   Panel,
-  PanelHeader,
   PanelBody,
+  PanelHeader,
+  StatTile,
+  StatusBadge,
   Toolbar,
   FilterChip,
   DataTable,
@@ -15,13 +22,7 @@ import {
   TBody,
   TR,
   TD,
-  Pagination,
-  StatusBadge,
-  EmptyState,
-  InlineAlert,
-  LoadingSkeleton,
 } from "@/components/ui-portal";
-import { ChevronDown, Search } from "lucide-react";
 import { apiGet, apiWrite, buildApiPath, extractErrorDetail } from "@/lib/api";
 import { formatDateOnly } from "@/lib/formatters";
 import type { PaginatedResponse, SubscriptionRow } from "@/lib/types";
@@ -29,10 +30,10 @@ import type { PaginatedResponse, SubscriptionRow } from "@/lib/types";
 export const Route = createFileRoute("/_app/subscriptions")({
   head: () => ({
     meta: [
-      { title: "Subscriptions — Rerkdee Admin" },
+      { title: "Subscriptions - Rerkdee Admin" },
       {
         name: "description",
-        content: "Manage premium access — grant, revoke, and bulk operations.",
+        content: "Manage premium access, trial grants, and manual revocations.",
       },
     ],
   }),
@@ -53,10 +54,12 @@ type SortDir = "asc" | "desc";
 
 function statusBadge(row: SubscriptionRow) {
   if (row.tier.toLowerCase().includes("trial")) {
-    return <StatusBadge variant="trial">trial</StatusBadge>;
+    return <StatusBadge variant="trial">Trial</StatusBadge>;
   }
-  if (row.active) return <StatusBadge variant="active">active</StatusBadge>;
-  return <StatusBadge variant="expired">inactive</StatusBadge>;
+  if (row.active) {
+    return <StatusBadge variant="active">Active</StatusBadge>;
+  }
+  return <StatusBadge variant="expired">Inactive</StatusBadge>;
 }
 
 function SubscriptionsPage() {
@@ -66,6 +69,7 @@ function SubscriptionsPage() {
   const [sortKey, setSortKey] = useState<SortKey>("expires_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(1);
+
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
   const [productId, setProductId] = useState("premium_monthly");
@@ -73,6 +77,7 @@ function SubscriptionsPage() {
   const [tier, setTier] = useState("premium");
   const [durationDays, setDurationDays] = useState("30");
   const [expiresAt, setExpiresAt] = useState("");
+
   const [selected, setSelected] = useState<string[]>([]);
   const [flash, setFlash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -158,22 +163,22 @@ function SubscriptionsPage() {
   const rows = subscriptionsQuery.data?.items ?? [];
   const total = subscriptionsQuery.data?.total ?? 0;
   const sortValue = useMemo(() => `${sortKey}:${sortDir}`, [sortDir, sortKey]);
-  const normalizedDuration = Number(durationDays);
+  const numericDuration = Number(durationDays);
   const effectiveDuration =
-    Number.isFinite(normalizedDuration) && normalizedDuration > 0
-      ? normalizedDuration
+    Number.isFinite(numericDuration) && numericDuration > 0
+      ? numericDuration
       : productId === "premium_yearly"
         ? 365
         : productId === "trial_10_days"
           ? 10
           : 30;
+  const canGrant =
+    userId.trim().length > 0 &&
+    (Boolean(expiresAt) || (Number.isFinite(numericDuration) && numericDuration > 0));
   const accessSummary = tier === "trial" ? "Trial access" : "Premium access";
   const expirySummary = expiresAt
     ? new Date(expiresAt).toLocaleString()
     : `Auto-expires in ${effectiveDuration} days`;
-  const canGrant =
-    userId.trim().length > 0 &&
-    (Boolean(expiresAt) || (Number.isFinite(normalizedDuration) && normalizedDuration > 0));
 
   return (
     <div className="flex flex-col gap-5">
@@ -195,56 +200,52 @@ function SubscriptionsPage() {
         </InlineAlert>
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-        <Panel>
-          <PanelHeader title="Grant subscription" description="Create or replace a subscription for a user." />
-          <PanelBody className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <StatTile label="Access tier" value={accessSummary} />
-              <StatTile label="Platform source" value={platform} />
-              <StatTile label="Expiry plan" value={expirySummary} />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setProductId("premium_monthly");
-                  setTier("premium");
-                  setPlatform("manual");
-                  setDurationDays("30");
-                  setExpiresAt("");
-                }}
-                className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
-              >
-                Monthly premium
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setProductId("premium_yearly");
-                  setTier("premium");
-                  setPlatform("manual");
-                  setDurationDays("365");
-                  setExpiresAt("");
-                }}
-                className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
-              >
-                Yearly premium
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setProductId("trial_10_days");
-                  setTier("trial");
-                  setPlatform("promo");
-                  setDurationDays("10");
-                  setExpiresAt("");
-                }}
-                className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
-              >
-                10-day trial
-              </button>
-            </div>
+      <Panel>
+        <PanelHeader
+          title="Grant subscription"
+          description="Use presets for the most common support actions, then review the final expiry before saving."
+        />
+        <PanelBody className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <StatTile label="Access tier" value={accessSummary} />
+            <StatTile label="Platform source" value={platform} />
+            <StatTile label="Expiry plan" value={expirySummary} />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <QuickActionButton
+              label="Monthly premium"
+              onClick={() => {
+                setProductId("premium_monthly");
+                setTier("premium");
+                setPlatform("manual");
+                setDurationDays("30");
+                setExpiresAt("");
+              }}
+            />
+            <QuickActionButton
+              label="Yearly premium"
+              onClick={() => {
+                setProductId("premium_yearly");
+                setTier("premium");
+                setPlatform("manual");
+                setDurationDays("365");
+                setExpiresAt("");
+              }}
+            />
+            <QuickActionButton
+              label="10-day trial"
+              onClick={() => {
+                setProductId("trial_10_days");
+                setTier("trial");
+                setPlatform("promo");
+                setDurationDays("10");
+                setExpiresAt("");
+              }}
+            />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Field label="User ID">
               <input
                 value={userId}
@@ -307,7 +308,10 @@ function SubscriptionsPage() {
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
               />
             </Field>
-            <Field label="Or explicit expiry">
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+            <Field label="Explicit expiry (optional)">
               <input
                 type="datetime-local"
                 value={expiresAt}
@@ -315,11 +319,14 @@ function SubscriptionsPage() {
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <p className="text-[11px] leading-5 text-muted-foreground">
-              Set either duration days or an exact expiry date. Exact expiry takes priority.
-            </p>
-            <button
-              type="button"
+            <div className="rounded-md border border-border bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
+              Use an explicit expiry when support is restoring a purchase or matching an external entitlement. If this stays empty, the subscription uses the duration above.
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <QuickActionButton
+              label="Apply product defaults"
               onClick={() => {
                 if (productId === "premium_yearly") {
                   setTier("premium");
@@ -333,22 +340,25 @@ function SubscriptionsPage() {
                 }
                 setExpiresAt("");
               }}
-              className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
-            >
-              Apply product defaults
-            </button>
+            />
             <button
               type="button"
               onClick={() => grantMutation.mutate()}
               disabled={grantMutation.isPending || !canGrant}
-              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {grantMutation.isPending ? "Saving…" : "Grant subscription"}
+              {grantMutation.isPending ? "Saving..." : "Grant subscription"}
             </button>
-          </PanelBody>
-        </Panel>
+          </div>
+        </PanelBody>
+      </Panel>
 
-        <Panel>
+      <Panel>
+        <PanelHeader
+          title="Current subscriptions"
+          description="Search, filter, and revoke existing access without leaving the page."
+        />
+        <PanelBody className="px-0 py-0">
           <Toolbar
             left={
               <>
@@ -361,7 +371,7 @@ function SubscriptionsPage() {
                       setPage(1);
                     }}
                     placeholder="Search email or user ID"
-                    className="h-8 w-64 rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+                    className="h-8 w-72 rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
                   />
                 </div>
                 {PRESETS.map((item) => (
@@ -414,7 +424,7 @@ function SubscriptionsPage() {
                     disabled={bulkRevokeMutation.isPending}
                     className="inline-flex h-8 items-center rounded-md border border-destructive/40 bg-destructive/10 px-3 text-[12px] font-medium text-destructive hover:bg-destructive/15 disabled:opacity-50"
                   >
-                    {bulkRevokeMutation.isPending ? "Revoking…" : `Revoke ${selected.length}`}
+                    {bulkRevokeMutation.isPending ? "Revoking..." : `Revoke ${selected.length}`}
                   </button>
                 ) : (
                   <span className="text-[12px] text-muted-foreground tabular-nums">
@@ -431,7 +441,10 @@ function SubscriptionsPage() {
             </div>
           ) : rows.length === 0 ? (
             <div className="px-5 py-10">
-              <EmptyState title="No subscriptions" description="No rows match the current filters." />
+              <EmptyState
+                title="No subscriptions"
+                description="No rows match the current filters."
+              />
             </div>
           ) : (
             <DataTable>
@@ -491,9 +504,27 @@ function SubscriptionsPage() {
           )}
 
           <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
-        </Panel>
-      </div>
+        </PanelBody>
+      </Panel>
     </div>
+  );
+}
+
+function QuickActionButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+    >
+      {label}
+    </button>
   );
 }
 
