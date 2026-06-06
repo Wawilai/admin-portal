@@ -134,6 +134,7 @@ export interface RemoteConfig {
   storeUrlAndroid: string;
   storeUrlIos: string;
   storeUrlWeb: string;
+  features: Record<string, { access: string[] }>;
 }
 
 export interface AuditRow {

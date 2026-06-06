@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  StatTile,
   PageHeader,
   Panel,
   PanelHeader,
@@ -157,6 +158,22 @@ function SubscriptionsPage() {
   const rows = subscriptionsQuery.data?.items ?? [];
   const total = subscriptionsQuery.data?.total ?? 0;
   const sortValue = useMemo(() => `${sortKey}:${sortDir}`, [sortDir, sortKey]);
+  const normalizedDuration = Number(durationDays);
+  const effectiveDuration =
+    Number.isFinite(normalizedDuration) && normalizedDuration > 0
+      ? normalizedDuration
+      : productId === "premium_yearly"
+        ? 365
+        : productId === "trial_10_days"
+          ? 10
+          : 30;
+  const accessSummary = tier === "trial" ? "Trial access" : "Premium access";
+  const expirySummary = expiresAt
+    ? new Date(expiresAt).toLocaleString()
+    : `Auto-expires in ${effectiveDuration} days`;
+  const canGrant =
+    userId.trim().length > 0 &&
+    (Boolean(expiresAt) || (Number.isFinite(normalizedDuration) && normalizedDuration > 0));
 
   return (
     <div className="flex flex-col gap-5">
@@ -182,6 +199,52 @@ function SubscriptionsPage() {
         <Panel>
           <PanelHeader title="Grant subscription" description="Create or replace a subscription for a user." />
           <PanelBody className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <StatTile label="Access tier" value={accessSummary} />
+              <StatTile label="Platform source" value={platform} />
+              <StatTile label="Expiry plan" value={expirySummary} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setProductId("premium_monthly");
+                  setTier("premium");
+                  setPlatform("manual");
+                  setDurationDays("30");
+                  setExpiresAt("");
+                }}
+                className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+              >
+                Monthly premium
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setProductId("premium_yearly");
+                  setTier("premium");
+                  setPlatform("manual");
+                  setDurationDays("365");
+                  setExpiresAt("");
+                }}
+                className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+              >
+                Yearly premium
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setProductId("trial_10_days");
+                  setTier("trial");
+                  setPlatform("promo");
+                  setDurationDays("10");
+                  setExpiresAt("");
+                }}
+                className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+              >
+                10-day trial
+              </button>
+            </div>
             <Field label="User ID">
               <input
                 value={userId}
@@ -231,8 +294,6 @@ function SubscriptionsPage() {
               >
                 <option value="premium">premium</option>
                 <option value="trial">trial</option>
-                <option value="pro">pro</option>
-                <option value="free">free</option>
               </select>
             </Field>
             <Field label="Duration days">
@@ -279,7 +340,7 @@ function SubscriptionsPage() {
             <button
               type="button"
               onClick={() => grantMutation.mutate()}
-              disabled={grantMutation.isPending || !userId.trim()}
+              disabled={grantMutation.isPending || !canGrant}
               className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {grantMutation.isPending ? "Saving…" : "Grant subscription"}

@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   PageHeader,
   Panel,
   PanelHeader,
   PanelBody,
+  StatTile,
   DataTable,
   THead,
   TH,
@@ -82,6 +83,13 @@ function CreditsPage() {
   });
 
   const policy = policyQuery.data;
+  const deltaValue = Number(delta);
+  const adjustmentSummary = useMemo(() => {
+    if (!Number.isFinite(deltaValue) || deltaValue === 0) {
+      return "No change";
+    }
+    return deltaValue > 0 ? `Add ${deltaValue} credits` : `Remove ${Math.abs(deltaValue)} credits`;
+  }, [deltaValue]);
 
   useEffect(() => {
     if (policy && freeDailyBase === "") {
@@ -98,6 +106,11 @@ function CreditsPage() {
 
       {flash ? <InlineAlert variant="success">{flash}</InlineAlert> : null}
       {error ? <InlineAlert variant="danger">{error}</InlineAlert> : null}
+      {policyQuery.isError ? (
+        <InlineAlert variant="danger" title="Unable to load credit policy">
+          Retry when the admin API is available again.
+        </InlineAlert>
+      ) : null}
 
       {policyQuery.isLoading ? (
         <LoadingSkeleton className="h-60" />
@@ -110,13 +123,15 @@ function CreditsPage() {
                 description="Controls the free daily base available to all users."
               />
               <PanelBody className="flex flex-col gap-4">
-                <Field label="Users with credits" value={String(policy?.usersWithCredits ?? "—")} />
-                <Field label="Total balance" value={String(policy?.totalBalance ?? "—")} />
-                <Field label="Active today" value={String(policy?.activeToday ?? "—")} />
-                <Field
-                  label="Exhausted today"
-                  value={String(policy?.creditsExhaustedToday ?? "—")}
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <StatTile label="Users with credits" value={policy?.usersWithCredits ?? "-"} />
+                  <StatTile label="Total balance" value={policy?.totalBalance ?? "-"} />
+                  <StatTile label="Active today" value={policy?.activeToday ?? "-"} />
+                  <StatTile
+                    label="Exhausted today"
+                    value={policy?.creditsExhaustedToday ?? "-"}
+                  />
+                </div>
                 <label className="block">
                   <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                     Free daily base
@@ -145,6 +160,43 @@ function CreditsPage() {
                 description="Manual balance adjustments are recorded in the audit log."
               />
               <PanelBody className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <StatTile label="Pending action" value={adjustmentSummary} />
+                  <StatTile
+                    label="Target user"
+                    value={userId.trim() || "Enter a user ID"}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDelta("10")}
+                    className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+                  >
+                    +10
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDelta("50")}
+                    className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+                  >
+                    +50
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDelta("100")}
+                    className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+                  >
+                    +100
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDelta("-10")}
+                    className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+                  >
+                    -10
+                  </button>
+                </div>
                 <label className="block">
                   <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                     User ID
@@ -171,7 +223,7 @@ function CreditsPage() {
                 <button
                   type="button"
                   onClick={() => adjustMutation.mutate()}
-                  disabled={adjustMutation.isPending}
+                  disabled={adjustMutation.isPending || !userId.trim() || !Number.isFinite(deltaValue) || deltaValue === 0}
                   className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {adjustMutation.isPending ? "Applying…" : "Apply adjustment"}
@@ -216,15 +268,6 @@ function CreditsPage() {
           </Panel>
         </>
       )}
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-sm text-foreground">{value}</div>
     </div>
   );
 }

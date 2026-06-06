@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
+  StatTile,
   PageHeader,
   Panel,
   PanelHeader,
@@ -134,18 +135,92 @@ function PromoPage() {
 
   const rows = promoQuery.data?.items ?? [];
   const total = promoQuery.data?.total ?? 0;
+  const rewardSummary = useMemo(() => {
+    if (discountType === "free_days") {
+      return `${discountValue || 0} free days`;
+    }
+    if (discountType === "discount_percent") {
+      return `${discountValue || 0}% discount`;
+    }
+    return `${discountValue || 0} bonus credits`;
+  }, [discountType, discountValue]);
+  const limitSummary =
+    Number(maxUses) > 0 ? `${maxUses} total redeems` : "Unlimited redeems";
+  const expirySummary =
+    Number(expiresInDays) > 0 ? `Expires in ${expiresInDays} days` : "No expiry";
+  const canCreate =
+    code.trim().length > 0 &&
+    Number(discountValue) > 0 &&
+    Number(maxUses) >= 0 &&
+    Number(expiresInDays) >= 0;
 
   return (
     <div className="flex flex-col gap-5">
-      <PageHeader title="Promo codes" subtitle="Create and deactivate promo access codes." />
+      <PageHeader
+        title="Promo codes"
+        subtitle="Create and deactivate promo access codes."
+        actions={
+          <span className="text-[11px] text-muted-foreground tabular-nums">
+            {total.toLocaleString()} codes
+          </span>
+        }
+      />
 
       {flash ? <InlineAlert variant="success">{flash}</InlineAlert> : null}
       {error ? <InlineAlert variant="danger">{error}</InlineAlert> : null}
+      {promoQuery.isError ? (
+        <InlineAlert variant="danger" title="Unable to load promo codes">
+          The list is temporarily unavailable. You can still review the form, but avoid creating new codes until backend connectivity is stable.
+        </InlineAlert>
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
         <Panel>
           <PanelHeader title="Create promo code" description="Configure reward, usage limits, and expiry before launch." />
           <PanelBody className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <StatTile label="Reward" value={rewardSummary} />
+              <StatTile label="Usage limit" value={limitSummary} />
+              <StatTile label="Expiry" value={expirySummary} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDiscountType("free_days");
+                  setDiscountValue("10");
+                  setMaxUses("1");
+                  setExpiresInDays("30");
+                }}
+                className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+              >
+                10-day trial pass
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDiscountType("free_days");
+                  setDiscountValue("30");
+                  setMaxUses("100");
+                  setExpiresInDays("14");
+                }}
+                className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+              >
+                30-day campaign
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDiscountType("credit_bonus");
+                  setDiscountValue("50");
+                  setMaxUses("0");
+                  setExpiresInDays("0");
+                }}
+                className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
+              >
+                Evergreen credit bonus
+              </button>
+            </div>
             <Field label="Code">
               <input
                 value={code}
@@ -206,10 +281,10 @@ function PromoPage() {
             <button
               type="button"
               onClick={() => createMutation.mutate()}
-              disabled={createMutation.isPending || !code.trim()}
+              disabled={createMutation.isPending || !canCreate}
               className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {createMutation.isPending ? "Creating…" : "Create code"}
+                {createMutation.isPending ? "Creating…" : "Create code"}
             </button>
           </PanelBody>
         </Panel>
