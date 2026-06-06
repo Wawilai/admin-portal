@@ -3,8 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { InlineAlert } from "@/components/ui-portal";
 import { useSession } from "@/features/auth/SessionContext";
-import { extractErrorDetail } from "@/lib/api";
+import { apiGet, extractErrorDetail } from "@/lib/api";
 import { getEnvironmentBadge } from "@/lib/environment";
+
+interface GoogleConfig {
+  enabled: boolean;
+  clientId: string;
+}
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -22,7 +27,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const usernameRef = useRef<HTMLInputElement>(null);
-  const { defaultRoute, isAuthenticated, isBootstrapping, signIn } = useSession();
+  const { defaultRoute, isAuthenticated, isBootstrapping, signIn, signInWithGoogle } = useSession();
   const environment = getEnvironmentBadge();
 
   const [username, setUsername] = useState("");
@@ -30,11 +35,50 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLock, setCapsLock] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [googleConfig, setGoogleConfig] = useState<GoogleConfig | null>(null);
 
   useEffect(() => {
     usernameRef.current?.focus();
+    // Fetch Google config from backend
+    apiGet<GoogleConfig>("/auth/google-config")
+      .then(setGoogleConfig)
+      .catch(() => setGoogleConfig({ enabled: false, clientId: "" }));
   }, []);
+
+  // Load Google Identity Services script when config is ready
+  useEffect(() => {
+    if (!googleConfig?.enabled || !googleConfig.clientId) return;
+    if (document.getElementById("gsi-script")) return;
+    const script = document.createElement("script");
+    script.id = "gsi-script";
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      window.google?.accounts.id.initialize({
+        client_id: googleConfig.clientId,
+        callback: async (response: { credential: string }) => {
+          setGoogleLoading(true);
+          setError(null);
+          try {
+            await signInWithGoogle(response.credential);
+            window.location.replace(defaultRoute);
+          } catch (err) {
+            setError(extractErrorDetail(err, "Google sign-in failed. Please try again."));
+          } finally {
+            setGoogleLoading(false);
+          }
+        },
+      });
+      window.google?.accounts.id.renderButton(
+        document.getElementById("google-signin-btn"),
+        { theme: "outline", size: "large", width: 332, text: "signin_with" },
+      );
+    };
+    document.head.appendChild(script);
+  }, [googleConfig, defaultRoute, signInWithGoogle]);
 
   if (!isBootstrapping && isAuthenticated) {
     return (
@@ -240,6 +284,28 @@ function LoginPage() {
                 )}
               </button>
             </form>
+
+            {googleConfig?.enabled && (
+              <>
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    or
+                  </span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  {googleLoading ? (
+                    <div className="flex h-9 items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Signing in with Google…
+                    </div>
+                  ) : (
+                    <div id="google-signin-btn" />
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <p className="mt-4 text-center text-[11px] text-muted-foreground">

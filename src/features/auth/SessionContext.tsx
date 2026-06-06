@@ -20,6 +20,7 @@ interface SessionContextValue {
   hasPermission: (permission: string) => boolean;
   refreshSession: () => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
+  signInWithGoogle: (credential: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -101,6 +102,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
         permissions.includes("*") || permissions.includes(permission),
       signIn: async (username: string, password: string) => {
         await apiWrite<{ ok: boolean }>("/auth/login", { username, password });
+        const result = await apiGet<AuthMeResponse>("/auth/me");
+        setUser(result.user);
+        setPermissions(result.permissions);
+        setApiCsrfToken(result.csrfToken);
+      },
+      signInWithGoogle: async (credential: string) => {
+        await apiWrite<{ ok: boolean }>("/auth/login/google", { credential });
         const result = await apiGet<AuthMeResponse>("/auth/me");
         setUser(result.user);
         setPermissions(result.permissions);
