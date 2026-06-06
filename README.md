@@ -66,7 +66,7 @@ VITE_APP_ENV=production
 
 Railway build/runtime notes:
 
-- builder uses `npm ci`
+- builder uses `npm install`
 - build is forced to Nitro `node-server`
 - runtime starts with `node .output/server/index.mjs`
 - Railway should expose `PORT`; Nitro will bind from `PORT`
