@@ -33,6 +33,7 @@ const permissionRouteOrder = [
   { permission: "promo.read", route: "/promo" },
   { permission: "ai.read", route: "/ai-ops" },
   { permission: "ai.read", route: "/ai-usage" },
+  { permission: "config.read", route: "/feature-access" },
   { permission: "config.read", route: "/remote-config" },
   { permission: "audit.read", route: "/audit-log" },
   { permission: "admin_users.read", route: "/admin-users" },

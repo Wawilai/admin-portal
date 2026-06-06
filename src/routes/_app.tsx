@@ -31,6 +31,7 @@ function AppShell() {
     { match: (path) => path.startsWith("/ai-ops"), permission: "ai.read" },
     { match: (path) => path.startsWith("/ai-usage"), permission: "ai.read" },
     { match: (path) => path.startsWith("/notifications"), permission: "notifications.read" },
+    { match: (path) => path.startsWith("/feature-access"), permission: "config.read" },
     { match: (path) => path.startsWith("/remote-config"), permission: "config.read" },
     { match: (path) => path.startsWith("/audit-log"), permission: "audit.read" },
     { match: (path) => path.startsWith("/admin-users"), permission: "admin_users.read" },

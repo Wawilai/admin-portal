@@ -11,6 +11,7 @@ import {
   SlidersHorizontal,
   ScrollText,
   ShieldCheck,
+  KeyRound,
 } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { useSession } from "@/features/auth/SessionContext";
@@ -33,6 +34,7 @@ const NAV: NavItem[] = [
   { label: "AI Ops", to: "/ai-ops", icon: Sparkles, permission: "ai.read" },
   { label: "AI Usage", to: "/ai-usage", icon: Activity, permission: "ai.read" },
   { label: "Notifications", to: "/notifications", icon: Bell, permission: "notifications.read" },
+  { label: "Feature Access", to: "/feature-access", icon: KeyRound, permission: "config.read" },
   { label: "Remote Config", to: "/remote-config", icon: SlidersHorizontal, permission: "config.read" },
   { label: "Audit Log", to: "/audit-log", icon: ScrollText, permission: "audit.read" },
   { label: "Admin Users", to: "/admin-users", icon: ShieldCheck, permission: "admin_users.read" },

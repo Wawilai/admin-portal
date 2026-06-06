@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSubscriptionsRouteImport } from './routes/_app/subscriptions'
 import { Route as AppRemoteConfigRouteImport } from './routes/_app/remote-config'
+import { Route as AppFeatureAccessRouteImport } from './routes/_app/feature-access'
 import { Route as AppPromoRouteImport } from './routes/_app/promo'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppCreditsRouteImport } from './routes/_app/credits'
@@ -46,6 +47,11 @@ const AppSubscriptionsRoute = AppSubscriptionsRouteImport.update({
 const AppRemoteConfigRoute = AppRemoteConfigRouteImport.update({
   id: '/remote-config',
   path: '/remote-config',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFeatureAccessRoute = AppFeatureAccessRouteImport.update({
+  id: '/feature-access',
+  path: '/feature-access',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPromoRoute = AppPromoRouteImport.update({
@@ -102,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/ai-usage': typeof AppAiUsageRoute
   '/audit-log': typeof AppAuditLogRoute
   '/credits': typeof AppCreditsRoute
+  '/feature-access': typeof AppFeatureAccessRoute
   '/notifications': typeof AppNotificationsRoute
   '/promo': typeof AppPromoRoute
   '/remote-config': typeof AppRemoteConfigRoute
@@ -116,6 +123,7 @@ export interface FileRoutesByTo {
   '/ai-usage': typeof AppAiUsageRoute
   '/audit-log': typeof AppAuditLogRoute
   '/credits': typeof AppCreditsRoute
+  '/feature-access': typeof AppFeatureAccessRoute
   '/notifications': typeof AppNotificationsRoute
   '/promo': typeof AppPromoRoute
   '/remote-config': typeof AppRemoteConfigRoute
@@ -133,6 +141,7 @@ export interface FileRoutesById {
   '/_app/ai-usage': typeof AppAiUsageRoute
   '/_app/audit-log': typeof AppAuditLogRoute
   '/_app/credits': typeof AppCreditsRoute
+  '/_app/feature-access': typeof AppFeatureAccessRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/promo': typeof AppPromoRoute
   '/_app/remote-config': typeof AppRemoteConfigRoute
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/ai-usage'
     | '/audit-log'
     | '/credits'
+    | '/feature-access'
     | '/notifications'
     | '/promo'
     | '/remote-config'
@@ -165,6 +175,7 @@ export interface FileRouteTypes {
     | '/ai-usage'
     | '/audit-log'
     | '/credits'
+    | '/feature-access'
     | '/notifications'
     | '/promo'
     | '/remote-config'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/_app/ai-usage'
     | '/_app/audit-log'
     | '/_app/credits'
+    | '/_app/feature-access'
     | '/_app/notifications'
     | '/_app/promo'
     | '/_app/remote-config'
@@ -253,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCreditsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/feature-access': {
+      id: '/_app/feature-access'
+      path: '/feature-access'
+      fullPath: '/feature-access'
+      preLoaderRoute: typeof AppFeatureAccessRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/audit-log': {
       id: '/_app/audit-log'
       path: '/audit-log'
@@ -304,6 +323,7 @@ interface AppRouteChildren {
   AppAiUsageRoute: typeof AppAiUsageRoute
   AppAuditLogRoute: typeof AppAuditLogRoute
   AppCreditsRoute: typeof AppCreditsRoute
+  AppFeatureAccessRoute: typeof AppFeatureAccessRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPromoRoute: typeof AppPromoRoute
   AppRemoteConfigRoute: typeof AppRemoteConfigRoute
@@ -319,6 +339,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAiUsageRoute: AppAiUsageRoute,
   AppAuditLogRoute: AppAuditLogRoute,
   AppCreditsRoute: AppCreditsRoute,
+  AppFeatureAccessRoute: AppFeatureAccessRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppPromoRoute: AppPromoRoute,
   AppRemoteConfigRoute: AppRemoteConfigRoute,
