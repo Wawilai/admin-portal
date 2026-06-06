@@ -52,7 +52,11 @@ function PromoPage() {
   const [preset, setPreset] = useState<Preset>("all");
   const [page, setPage] = useState(1);
   const [code, setCode] = useState("");
-  const [freeDays, setFreeDays] = useState("30");
+  const [description, setDescription] = useState("");
+  const [discountType, setDiscountType] = useState("free_days");
+  const [discountValue, setDiscountValue] = useState("30");
+  const [maxUses, setMaxUses] = useState("1");
+  const [expiresInDays, setExpiresInDays] = useState("30");
   const [selected, setSelected] = useState<number[]>([]);
   const [flash, setFlash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,17 +78,21 @@ function PromoPage() {
     mutationFn: () =>
       apiWrite<{ ok: boolean }>("/promo/codes", {
         code: code.trim().toUpperCase(),
-        description: "Created from admin portal",
-        discountType: "free_days",
-        discountValue: Number(freeDays),
-        maxUses: 1,
-        expiresInDays: 30,
+        description: description.trim(),
+        discountType,
+        discountValue: Number(discountValue),
+        maxUses: Number(maxUses),
+        expiresInDays: Number(expiresInDays),
       }),
     onSuccess: async () => {
       setFlash("Promo code created.");
       setError(null);
       setCode("");
-      setFreeDays("30");
+      setDescription("");
+      setDiscountType("free_days");
+      setDiscountValue("30");
+      setMaxUses("1");
+      setExpiresInDays("30");
       await queryClient.invalidateQueries({ queryKey: ["promo-codes"] });
     },
     onError: (mutationError) => {
@@ -136,7 +144,7 @@ function PromoPage() {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
         <Panel>
-          <PanelHeader title="Create promo code" description="Fast path for free premium day campaigns." />
+          <PanelHeader title="Create promo code" description="Configure reward, usage limits, and expiry before launch." />
           <PanelBody className="flex flex-col gap-4">
             <Field label="Code">
               <input
@@ -146,14 +154,55 @@ function PromoPage() {
                 className="h-9 w-full rounded-md border border-border bg-background px-3 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <Field label="Free days">
+            <Field label="Description">
               <input
-                type="number"
-                value={freeDays}
-                onChange={(event) => setFreeDays(event.target.value)}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Campaign note or operator context"
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
+            <Field label="Reward type">
+              <select
+                value={discountType}
+                onChange={(event) => setDiscountType(event.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="free_days">free_days</option>
+                <option value="discount_percent">discount_percent</option>
+                <option value="credit_bonus">credit_bonus</option>
+              </select>
+            </Field>
+            <Field label="Reward value">
+              <input
+                type="number"
+                min="1"
+                value={discountValue}
+                onChange={(event) => setDiscountValue(event.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </Field>
+            <Field label="Max uses">
+              <input
+                type="number"
+                min="0"
+                value={maxUses}
+                onChange={(event) => setMaxUses(event.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </Field>
+            <Field label="Expires in days">
+              <input
+                type="number"
+                min="0"
+                value={expiresInDays}
+                onChange={(event) => setExpiresInDays(event.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+              />
+            </Field>
+            <p className="text-[11px] leading-5 text-muted-foreground">
+              Set max uses to <code>0</code> for unlimited redemption. Set expires in days to <code>0</code> for no expiry.
+            </p>
             <button
               type="button"
               onClick={() => createMutation.mutate()}
