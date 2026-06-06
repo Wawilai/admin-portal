@@ -19,9 +19,10 @@ function resolveApiBaseUrl() {
   return "http://localhost:8900/admin-api";
 }
 
-const API_BASE_URL = resolveApiBaseUrl();
-let csrfToken = "";
+export const API_BASE_URL = resolveApiBaseUrl();
 export const ADMIN_UNAUTHORIZED_EVENT = "admin-api-unauthorized";
+
+let csrfToken = "";
 
 export function setApiCsrfToken(value: string) {
   csrfToken = value;
@@ -50,46 +51,16 @@ async function extractDetail(response: Response): Promise<string> {
       return data.detail.trim();
     }
   } catch {
-    // non-JSON body — ignore
+    // ignore non-json bodies
   }
   return "";
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    credentials: "include",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      notifyUnauthorized();
-    }
-    const detail = await extractDetail(response);
-    throw new ApiError(`GET ${path} failed`, response.status, detail);
-  }
-
-  return (await response.json()) as T;
-}
-
-export async function apiPost<T>(
+async function handleResponse<T>(
+  response: Response,
+  method: string,
   path: string,
-  body: unknown,
-  method: "POST" | "PATCH" | "DELETE" = "POST",
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...(csrfToken ? { "X-Admin-Csrf-Token": csrfToken } : {}),
-    },
-    body: JSON.stringify(body),
-  });
-
   if (!response.ok) {
     if (response.status === 401) {
       notifyUnauthorized();
@@ -101,12 +72,59 @@ export async function apiPost<T>(
   return (await response.json()) as T;
 }
 
-/** Extract the `detail` string from an ApiError, or fall back to a default message. */
-export function extractErrorDetail(error: unknown, fallback: string): string {
+export async function apiGet<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  return handleResponse<T>(response, "GET", path);
+}
+
+export async function apiWrite<T>(
+  path: string,
+  body: unknown,
+  method: "POST" | "PATCH" | "DELETE" = "POST",
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...(csrfToken ? { "X-Admin-Csrf-Token": csrfToken } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  return handleResponse<T>(response, method, path);
+}
+
+export function buildApiPath(
+  path: string,
+  params?: Record<string, string | number | boolean | null | undefined>,
+) {
+  if (!params) {
+    return path;
+  }
+
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === "") {
+      continue;
+    }
+    search.set(key, String(value));
+  }
+
+  const query = search.toString();
+  return query ? `${path}?${query}` : path;
+}
+
+export function extractErrorDetail(error: unknown, fallback: string) {
   if (error instanceof ApiError && error.detail) {
     return error.detail;
   }
   return fallback;
 }
-
-export { API_BASE_URL };

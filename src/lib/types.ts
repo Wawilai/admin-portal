@@ -37,27 +37,6 @@ export interface DashboardOverview {
   pushStatus: HealthStatus;
 }
 
-export interface AiConfig {
-  currentModel: string;
-  availableModels: string[];
-  hasApiKey: boolean;
-  maskedApiKey: string;
-}
-
-export interface RemoteConfig {
-  storeUrlAndroid: string;
-  storeUrlIos: string;
-  storeUrlWeb: string;
-}
-
-export interface TrendPoint {
-  label: string;
-  total: number;
-  dream: number;
-  horoscope: number;
-  companion: number;
-}
-
 export interface UserSummary {
   userId: string;
   email: string;
@@ -82,17 +61,7 @@ export interface UserDetail {
   devices: { label: string; lastSeenAt: string }[];
   recentUsage: { feature: string; count: number }[];
   subscriptionExpiresAt?: string | null;
-  subscriptionRows?: Array<Record<string, unknown>>;
   lastActiveAt?: string | null;
-}
-
-export interface CreditPolicy {
-  freeDailyBase: number;
-  usersWithCredits: number;
-  totalBalance: number;
-  activeToday?: number;
-  creditsExhaustedToday?: number;
-  items?: CreditRow[];
 }
 
 export interface CreditRow {
@@ -102,6 +71,15 @@ export interface CreditRow {
   remainingToday: number;
   updatedAt: string;
   locked: boolean;
+}
+
+export interface CreditPolicy {
+  freeDailyBase: number;
+  usersWithCredits: number;
+  totalBalance: number;
+  activeToday?: number;
+  creditsExhaustedToday?: number;
+  items?: CreditRow[];
 }
 
 export interface SubscriptionRow {
@@ -122,6 +100,19 @@ export interface PromoCodeRow {
   maxUses: number | null;
   expiresAt: string | null;
   active: boolean;
+}
+
+export interface AiConfig {
+  currentModel: string;
+  availableModels: string[];
+  hasApiKey: boolean;
+  maskedApiKey: string;
+}
+
+export interface RemoteConfig {
+  storeUrlAndroid: string;
+  storeUrlIos: string;
+  storeUrlWeb: string;
 }
 
 export interface AuditRow {

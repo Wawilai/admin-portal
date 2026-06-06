@@ -1,87 +1,90 @@
 # Rerkdee Admin Portal
 
-Standalone React admin portal scaffold for the mobile app operations console.
+Rebuilt admin frontend for Rerkdee, separated from the backend and connected to the FastAPI `admin-api`.
 
-## Purpose
+## What This Replaces
 
-This project is intentionally separated from the FastAPI backend so the admin UI can evolve independently while the backend becomes a JSON Admin API.
+This project now replaces the previous Vite admin scaffold and is intended to become the primary admin UI.
 
-Docs:
+Current live backend-connected modules:
 
-- [Architecture](/d:/Lab/MobileAPP/admin_portal/docs/architecture.md:1)
-- [API Contract](/d:/Lab/MobileAPP/admin_portal/docs/api-contract.md:1)
-- [Roadmap](/d:/Lab/MobileAPP/admin_portal/docs/roadmap.md:1)
-- [Backend Tasks](/d:/Lab/MobileAPP/admin_portal/docs/backend-tasks.md:1)
-- [Frontend Tasks](/d:/Lab/MobileAPP/admin_portal/docs/frontend-tasks.md:1)
+- login and session bootstrap
+- dashboard overview
+- users and user detail
+- credits policy and credit adjustment
+- subscriptions and bulk revoke
+- promo codes and bulk deactivate
+- AI configuration
+- remote config
+- audit log
+- admin users
 
-## Included
+The `Notifications` route is intentionally kept as a non-live placeholder until notification endpoints are added to the backend contract.
 
-- React + TypeScript + Vite scaffold
-- protected admin shell layout
-- route structure for core modules
-- dashboard and operational pages with realistic seeded data
-- local auth/session shell for frontend development
-- API client skeleton for future backend wiring
-- shared domain types aligned to the proposed admin API
+## Stack
 
-## Next Steps
-
-1. Install dependencies
-2. Run the portal locally
-3. Start replacing seeded loaders with real `admin-api` calls
-4. Replace the local session shell with backend auth/session integration
+- React 19
+- TanStack Start
+- TanStack Router
+- TanStack Query
+- Tailwind CSS 4
+- Lovable Vite TanStack config
 
 ## Scripts
 
 ```bash
 npm install
 npm run dev
+npm run typecheck
+npm run build
 ```
 
-## Railway Deploy Notes
+## Environment
 
-When deploying the portal separately from the FastAPI backend, set these variables before building:
+Create a local `.env` only when needed. Public frontend env values:
+
+```text
+VITE_ADMIN_API_BASE_URL=http://localhost:8900/admin-api
+VITE_APP_ENV=local
+```
+
+Example production pairing:
+
+```text
+VITE_ADMIN_API_BASE_URL=https://rerkdee-api-production.up.railway.app/admin-api
+VITE_APP_ENV=production
+```
+
+## Railway Notes
 
 Frontend service:
 
 ```text
-VITE_ADMIN_API_BASE_URL=https://<your-backend-domain>/admin-api
+VITE_ADMIN_API_BASE_URL=https://rerkdee-api-production.up.railway.app/admin-api
 VITE_APP_ENV=production
 ```
 
 Backend service:
 
 ```text
-ALLOWED_ORIGINS=https://<your-frontend-domain>
+ALLOWED_ORIGINS=https://admin-portal-production-c563.up.railway.app
 ADMIN_SESSION_COOKIE_SAMESITE=none
 ADMIN_SESSION_COOKIE_SECURE=true
 ```
 
-The portal sends authenticated requests with `credentials: include`, so cross-domain admin login will fail unless the backend both:
+## Docs
 
-- allows the frontend origin in CORS
-- returns a `Secure` cookie with `SameSite=None`
+- [Architecture](./docs/architecture.md)
+- [API Contract](./docs/api-contract.md)
+- [Roadmap](./docs/roadmap.md)
+- [Backend Tasks](./docs/backend-tasks.md)
+- [Frontend Tasks](./docs/frontend-tasks.md)
+- [Frontend Redesign Spec](./docs/frontend-redesign-spec.md)
+- [Lovable Prompts](./docs/lovable-prompts.md)
 
-## Suggested Backend Pairing
+## Current Notes
 
-Use this portal with new FastAPI JSON routes under:
-
-```text
-/admin-api/auth/*
-/admin-api/dashboard/*
-/admin-api/users/*
-/admin-api/credits/*
-/admin-api/subscriptions/*
-/admin-api/promo/*
-/admin-api/ai/*
-/admin-api/notifications/*
-/admin-api/config/*
-/admin-api/audit-log
-```
-
-## Current Scaffold Notes
-
-- Route protection is handled in `src/features/auth/RequireAuth.tsx`
-- Session bootstrap currently uses browser storage only for local demo flow
-- Replace `SessionProvider` sign-in logic with `POST /admin-api/auth/login`
-- Replace session bootstrap with `GET /admin-api/auth/me`
+- Session state is restored through `GET /admin-api/auth/me`
+- Write actions use CSRF headers from the authenticated admin session
+- Environment badges switch between local, staging, and production from `VITE_APP_ENV`
+- If the backend is unavailable, the app now shows a retryable session error state instead of silently failing

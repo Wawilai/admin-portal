@@ -1,34 +1,38 @@
 import type { PropsWithChildren } from "react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import {
   ADMIN_UNAUTHORIZED_EVENT,
   ApiError,
   apiGet,
-  apiPost,
+  apiWrite,
   setApiCsrfToken,
-} from "../../lib/api";
-import type { AdminSessionUser, AuthMeResponse } from "../../lib/types";
+} from "@/lib/api";
+import type { AdminSessionUser, AuthMeResponse } from "@/lib/types";
 
 interface SessionContextValue {
   isAuthenticated: boolean;
   isBootstrapping: boolean;
   bootstrapFailed: boolean;
   defaultRoute: string;
-  hasPermission: (permission: string) => boolean;
   permissions: string[];
   user: AdminSessionUser | null;
+  hasPermission: (permission: string) => boolean;
+  refreshSession: () => Promise<void>;
   signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
+
 const permissionRouteOrder = [
   { permission: "dashboard.read", route: "/" },
   { permission: "users.read", route: "/users" },
   { permission: "credits.read", route: "/credits" },
   { permission: "subscriptions.read", route: "/subscriptions" },
   { permission: "promo.read", route: "/promo" },
+  { permission: "dashboard.read", route: "/ai-ops" },
+  { permission: "config.read", route: "/remote-config" },
   { permission: "audit.read", route: "/audit-log" },
   { permission: "admin_users.read", route: "/admin-users" },
 ];
@@ -38,6 +42,28 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [permissions, setPermissions] = useState<string[]>([]);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [bootstrapFailed, setBootstrapFailed] = useState(false);
+
+  const refreshSession = useCallback(async () => {
+    setIsBootstrapping(true);
+    setBootstrapFailed(false);
+
+    try {
+      const result = await apiGet<AuthMeResponse>("/auth/me");
+      setUser(result.user);
+      setPermissions(result.permissions);
+      setApiCsrfToken(result.csrfToken);
+    } catch (error) {
+      const unauthenticated =
+        error instanceof ApiError &&
+        (error.status === 401 || error.status === 403);
+      setUser(null);
+      setPermissions([]);
+      setApiCsrfToken("");
+      setBootstrapFailed(!unauthenticated);
+    } finally {
+      setIsBootstrapping(false);
+    }
+  }, []);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -53,48 +79,17 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const bootstrap = async () => {
-      try {
-        const result = await apiGet<AuthMeResponse>("/auth/me");
-        if (isMounted) {
-          setUser(result.user);
-          setPermissions(result.permissions);
-          setApiCsrfToken(result.csrfToken);
-        }
-      } catch (error) {
-        const isUnauthenticated =
-          error instanceof ApiError &&
-          (error.status === 401 || error.status === 403);
-        if (!isUnauthenticated) {
-          console.error("Failed to bootstrap admin session", error);
-        }
-        if (isMounted) {
-          setUser(null);
-          setPermissions([]);
-          setApiCsrfToken("");
-          setBootstrapFailed(!isUnauthenticated);
-        }
-      } finally {
-        if (isMounted) {
-          setIsBootstrapping(false);
-        }
-      }
-    };
-
-    void bootstrap();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    void refreshSession();
+  }, [refreshSession]);
 
   const value = useMemo<SessionContextValue>(
     () => ({
       isAuthenticated: user !== null,
       isBootstrapping,
       bootstrapFailed,
+      permissions,
+      user,
+      refreshSession,
       defaultRoute:
         permissionRouteOrder.find(
           (item) =>
@@ -102,23 +97,21 @@ export function SessionProvider({ children }: PropsWithChildren) {
         )?.route ?? "/login",
       hasPermission: (permission: string) =>
         permissions.includes("*") || permissions.includes(permission),
-      permissions,
-      user,
       signIn: async (username: string, password: string) => {
-        await apiPost<{ ok: boolean }>("/auth/login", { username, password });
+        await apiWrite<{ ok: boolean }>("/auth/login", { username, password });
         const result = await apiGet<AuthMeResponse>("/auth/me");
         setUser(result.user);
         setPermissions(result.permissions);
         setApiCsrfToken(result.csrfToken);
       },
       signOut: async () => {
-        await apiPost<{ ok: boolean }>("/auth/logout", {});
+        await apiWrite<{ ok: boolean }>("/auth/logout", {});
         setUser(null);
         setPermissions([]);
         setApiCsrfToken("");
       },
     }),
-    [bootstrapFailed, isBootstrapping, permissions, user],
+    [bootstrapFailed, isBootstrapping, permissions, refreshSession, user],
   );
 
   return (
@@ -128,10 +121,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
 export function useSession() {
   const context = useContext(SessionContext);
-
   if (!context) {
     throw new Error("useSession must be used within SessionProvider");
   }
-
   return context;
 }
