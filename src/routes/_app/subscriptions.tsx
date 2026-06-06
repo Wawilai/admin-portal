@@ -41,25 +41,41 @@ export const Route = createFileRoute("/_app/subscriptions")({
 });
 
 const PRESETS = [
-  { id: "all", label: "All" },
-  { id: "active", label: "Active" },
-  { id: "expired", label: "Expired" },
-  { id: "trial", label: "Trial" },
-  { id: "expiring_soon", label: "Expiring soon" },
+  { id: "all", label: "ทั้งหมด" },
+  { id: "active", label: "ใช้งานอยู่" },
+  { id: "expired", label: "หมดอายุ" },
+  { id: "trial", label: "ทดลอง/โปรโม" },
+  { id: "expiring_soon", label: "ใกล้หมดอายุ" },
 ] as const;
 
 type Preset = (typeof PRESETS)[number]["id"];
 type SortKey = "expires_at" | "user" | "tier" | "days_left";
 type SortDir = "asc" | "desc";
 
+// A promo grant is stored as tier 'premium' with platform/source 'promo';
+// surface it as its own badge so it isn't mistaken for a paid subscription.
+function isPromoRow(row: SubscriptionRow) {
+  return row.source?.toLowerCase().includes("promo") ?? false;
+}
+
+function tierLabel(row: SubscriptionRow) {
+  if (row.tier.toLowerCase().includes("trial")) return "ทดลองใช้";
+  if (isPromoRow(row)) return "โปรโมชั่น";
+  if (row.tier.toLowerCase().includes("premium")) return "พรีเมียม";
+  return row.tier;
+}
+
 function statusBadge(row: SubscriptionRow) {
+  if (!row.active) {
+    return <StatusBadge variant="expired">หมดอายุ</StatusBadge>;
+  }
+  if (isPromoRow(row)) {
+    return <StatusBadge variant="trial">โปรโมชั่น</StatusBadge>;
+  }
   if (row.tier.toLowerCase().includes("trial")) {
-    return <StatusBadge variant="trial">Trial</StatusBadge>;
+    return <StatusBadge variant="trial">ทดลอง</StatusBadge>;
   }
-  if (row.active) {
-    return <StatusBadge variant="active">Active</StatusBadge>;
-  }
-  return <StatusBadge variant="expired">Inactive</StatusBadge>;
+  return <StatusBadge variant="active">ใช้งานอยู่</StatusBadge>;
 }
 
 function SubscriptionsPage() {
@@ -114,7 +130,7 @@ function SubscriptionsPage() {
         expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
       }),
     onSuccess: async () => {
-      setFlash("Subscription granted.");
+      setFlash("ให้สิทธิ์เรียบร้อยแล้ว");
       setError(null);
       setUserId("");
       setEmail("");
@@ -124,7 +140,7 @@ function SubscriptionsPage() {
       await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
     onError: (mutationError) => {
-      setError(extractErrorDetail(mutationError, "Unable to grant subscription."));
+      setError(extractErrorDetail(mutationError, "ให้สิทธิ์ไม่สำเร็จ"));
       setFlash(null);
     },
   });
@@ -133,12 +149,12 @@ function SubscriptionsPage() {
     mutationFn: (targetUserId: string) =>
       apiWrite<{ ok: boolean }>(`/subscriptions/${targetUserId}/revoke`, {}),
     onSuccess: async () => {
-      setFlash("Subscription revoked.");
+      setFlash("ยกเลิกสิทธิ์เรียบร้อยแล้ว");
       setError(null);
       await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
     onError: (mutationError) => {
-      setError(extractErrorDetail(mutationError, "Unable to revoke subscription."));
+      setError(extractErrorDetail(mutationError, "ยกเลิกสิทธิ์ไม่สำเร็จ"));
       setFlash(null);
     },
   });
@@ -149,13 +165,13 @@ function SubscriptionsPage() {
         userIds,
       }),
     onSuccess: async (result) => {
-      setFlash(`Revoked ${result.affected} subscriptions.`);
+      setFlash(`ยกเลิกสิทธิ์แล้ว ${result.affected} รายการ`);
       setError(null);
       setSelected([]);
       await queryClient.invalidateQueries({ queryKey: ["subscriptions"] });
     },
     onError: (mutationError) => {
-      setError(extractErrorDetail(mutationError, "Unable to bulk revoke subscriptions."));
+      setError(extractErrorDetail(mutationError, "ยกเลิกหลายรายการไม่สำเร็จ"));
       setFlash(null);
     },
   });
@@ -175,19 +191,19 @@ function SubscriptionsPage() {
   const canGrant =
     userId.trim().length > 0 &&
     (Boolean(expiresAt) || (Number.isFinite(numericDuration) && numericDuration > 0));
-  const accessSummary = tier === "trial" ? "Trial access" : "Premium access";
+  const accessSummary = tier === "trial" ? "สิทธิ์ทดลองใช้" : "สิทธิ์พรีเมียม";
   const expirySummary = expiresAt
     ? new Date(expiresAt).toLocaleString()
-    : `Auto-expires in ${effectiveDuration} days`;
+    : `หมดอายุอัตโนมัติใน ${effectiveDuration} วัน`;
 
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
-        title="Subscriptions"
-        subtitle="Grant, inspect, and revoke premium access."
+        title="สมาชิก / การสมัครใช้งาน"
+        subtitle="ให้สิทธิ์ ตรวจสอบ และยกเลิกสิทธิ์พรีเมียมของผู้ใช้"
         actions={
           <span className="text-[11px] text-muted-foreground tabular-nums">
-            {total.toLocaleString()} subscriptions
+            ทั้งหมด {total.toLocaleString()} รายการ
           </span>
         }
       />
@@ -195,26 +211,26 @@ function SubscriptionsPage() {
       {flash ? <InlineAlert variant="success">{flash}</InlineAlert> : null}
       {error ? <InlineAlert variant="danger">{error}</InlineAlert> : null}
       {subscriptionsQuery.isError ? (
-        <InlineAlert variant="danger" title="Unable to load subscriptions">
-          Check backend status or adjust the current filters and try again.
+        <InlineAlert variant="danger" title="โหลดรายการสมาชิกไม่สำเร็จ">
+          ตรวจสอบการเชื่อมต่อระบบ หรือปรับตัวกรองแล้วลองใหม่อีกครั้ง
         </InlineAlert>
       ) : null}
 
       <Panel>
         <PanelHeader
-          title="Grant subscription"
-          description="Use presets for the most common support actions, then review the final expiry before saving."
+          title="ให้สิทธิ์ผู้ใช้"
+          description="เลือกชุดสำเร็จรูปสำหรับงานที่ใช้บ่อย แล้วตรวจวันหมดอายุก่อนบันทึก"
         />
         <PanelBody className="flex flex-col gap-5">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <StatTile label="Access tier" value={accessSummary} />
-            <StatTile label="Platform source" value={platform} />
-            <StatTile label="Expiry plan" value={expirySummary} />
+            <StatTile label="ประเภทสิทธิ์" value={accessSummary} />
+            <StatTile label="ช่องทางที่มา" value={platform} />
+            <StatTile label="วันหมดอายุ" value={expirySummary} />
           </div>
 
           <div className="flex flex-wrap gap-2">
             <QuickActionButton
-              label="Monthly premium"
+              label="พรีเมียม รายเดือน"
               onClick={() => {
                 setProductId("premium_monthly");
                 setTier("premium");
@@ -224,7 +240,7 @@ function SubscriptionsPage() {
               }}
             />
             <QuickActionButton
-              label="Yearly premium"
+              label="พรีเมียม รายปี"
               onClick={() => {
                 setProductId("premium_yearly");
                 setTier("premium");
@@ -234,7 +250,7 @@ function SubscriptionsPage() {
               }}
             />
             <QuickActionButton
-              label="10-day trial"
+              label="ทดลองใช้ 10 วัน"
               onClick={() => {
                 setProductId("trial_10_days");
                 setTier("trial");
@@ -246,15 +262,15 @@ function SubscriptionsPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Field label="User ID">
+            <Field label="รหัสผู้ใช้ (User ID)">
               <input
                 value={userId}
                 onChange={(event) => setUserId(event.target.value)}
-                placeholder="uid_001"
+                placeholder="เช่น uid_001"
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <Field label="Email (optional)">
+            <Field label="อีเมล (ไม่บังคับ)">
               <input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
@@ -262,42 +278,42 @@ function SubscriptionsPage() {
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <Field label="Product ID">
+            <Field label="แพ็กเกจ">
               <select
                 value={productId}
                 onChange={(event) => setProductId(event.target.value)}
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               >
-                <option value="premium_monthly">premium_monthly</option>
-                <option value="premium_yearly">premium_yearly</option>
-                <option value="trial_10_days">trial_10_days</option>
-                <option value="manual_override">manual_override</option>
+                <option value="premium_monthly">พรีเมียม รายเดือน</option>
+                <option value="premium_yearly">พรีเมียม รายปี</option>
+                <option value="trial_10_days">ทดลองใช้ 10 วัน</option>
+                <option value="manual_override">กำหนดเอง</option>
               </select>
             </Field>
-            <Field label="Platform">
+            <Field label="ช่องทางที่มา">
               <select
                 value={platform}
                 onChange={(event) => setPlatform(event.target.value)}
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               >
-                <option value="manual">manual</option>
-                <option value="promo">promo</option>
-                <option value="ios">ios</option>
-                <option value="android">android</option>
-                <option value="stripe">stripe</option>
+                <option value="manual">ให้เองโดยแอดมิน</option>
+                <option value="promo">โปรโมชั่น</option>
+                <option value="ios">App Store (iOS)</option>
+                <option value="android">Google Play</option>
+                <option value="stripe">Stripe</option>
               </select>
             </Field>
-            <Field label="Tier">
+            <Field label="ประเภทสิทธิ์">
               <select
                 value={tier}
                 onChange={(event) => setTier(event.target.value)}
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               >
-                <option value="premium">premium</option>
-                <option value="trial">trial</option>
+                <option value="premium">พรีเมียม (ใช้ได้ไม่จำกัด)</option>
+                <option value="trial">ทดลองใช้ (ใช้ได้ไม่จำกัด มีวันหมด)</option>
               </select>
             </Field>
-            <Field label="Duration days">
+            <Field label="จำนวนวัน">
               <input
                 type="number"
                 min="1"
@@ -311,7 +327,7 @@ function SubscriptionsPage() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-            <Field label="Explicit expiry (optional)">
+            <Field label="กำหนดวันหมดอายุเอง (ไม่บังคับ)">
               <input
                 type="datetime-local"
                 value={expiresAt}
@@ -320,13 +336,14 @@ function SubscriptionsPage() {
               />
             </Field>
             <div className="rounded-md border border-border bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
-              Use an explicit expiry when support is restoring a purchase or matching an external entitlement. If this stays empty, the subscription uses the duration above.
+              ใช้ช่องนี้เมื่อต้องการกู้คืนการซื้อ หรือกำหนดวันหมดอายุให้ตรงกับสิทธิ์จากภายนอก ·
+              ถ้าเว้นว่าง ระบบจะใช้ "จำนวนวัน" ด้านบนแทน
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <QuickActionButton
-              label="Apply product defaults"
+              label="ตั้งค่าตามแพ็กเกจ"
               onClick={() => {
                 if (productId === "premium_yearly") {
                   setTier("premium");
@@ -347,7 +364,7 @@ function SubscriptionsPage() {
               disabled={grantMutation.isPending || !canGrant}
               className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {grantMutation.isPending ? "Saving..." : "Grant subscription"}
+              {grantMutation.isPending ? "กำลังบันทึก..." : "ให้สิทธิ์"}
             </button>
           </div>
         </PanelBody>
@@ -355,8 +372,8 @@ function SubscriptionsPage() {
 
       <Panel>
         <PanelHeader
-          title="Current subscriptions"
-          description="Search, filter, and revoke existing access without leaving the page."
+          title="รายการสมาชิกปัจจุบัน"
+          description="ค้นหา กรอง และยกเลิกสิทธิ์ได้จากหน้านี้"
         />
         <PanelBody className="px-0 py-0">
           <Toolbar
@@ -370,7 +387,7 @@ function SubscriptionsPage() {
                       setSearch(event.target.value);
                       setPage(1);
                     }}
-                    placeholder="Search email or user ID"
+                    placeholder="ค้นหาอีเมลหรือรหัสผู้ใช้"
                     className="h-8 w-72 rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
                   />
                 </div>
@@ -391,7 +408,7 @@ function SubscriptionsPage() {
             right={
               <div className="flex items-center gap-3">
                 <label className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  Sort
+                  เรียงตาม
                   <div className="relative">
                     <select
                       value={sortValue}
@@ -406,13 +423,13 @@ function SubscriptionsPage() {
                       }}
                       className="h-8 appearance-none rounded-md border border-input bg-background pl-2.5 pr-7 text-[12px] font-medium text-foreground outline-none transition-colors hover:bg-muted focus:border-ring focus:ring-2 focus:ring-ring/40"
                     >
-                      <option value="expires_at:desc">Expiry · latest</option>
-                      <option value="expires_at:asc">Expiry · soonest</option>
-                      <option value="days_left:asc">Days left · low to high</option>
-                      <option value="days_left:desc">Days left · high to low</option>
-                      <option value="user:asc">User · A→Z</option>
-                      <option value="user:desc">User · Z→A</option>
-                      <option value="tier:asc">Tier · A→Z</option>
+                      <option value="expires_at:desc">วันหมดอายุ · ล่าสุด</option>
+                      <option value="expires_at:asc">วันหมดอายุ · เร็วสุด</option>
+                      <option value="days_left:asc">วันคงเหลือ · น้อยไปมาก</option>
+                      <option value="days_left:desc">วันคงเหลือ · มากไปน้อย</option>
+                      <option value="user:asc">ผู้ใช้ · ก→ฮ</option>
+                      <option value="user:desc">ผู้ใช้ · ฮ→ก</option>
+                      <option value="tier:asc">ประเภทสิทธิ์ · ก→ฮ</option>
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
                   </div>
@@ -424,11 +441,11 @@ function SubscriptionsPage() {
                     disabled={bulkRevokeMutation.isPending}
                     className="inline-flex h-8 items-center rounded-md border border-destructive/40 bg-destructive/10 px-3 text-[12px] font-medium text-destructive hover:bg-destructive/15 disabled:opacity-50"
                   >
-                    {bulkRevokeMutation.isPending ? "Revoking..." : `Revoke ${selected.length}`}
+                    {bulkRevokeMutation.isPending ? "กำลังยกเลิก..." : `ยกเลิก ${selected.length} รายการ`}
                   </button>
                 ) : (
                   <span className="text-[12px] text-muted-foreground tabular-nums">
-                    {total} subscriptions
+                    {total} รายการ
                   </span>
                 )}
               </div>
@@ -442,21 +459,21 @@ function SubscriptionsPage() {
           ) : rows.length === 0 ? (
             <div className="px-5 py-10">
               <EmptyState
-                title="No subscriptions"
-                description="No rows match the current filters."
+                title="ไม่มีรายการสมาชิก"
+                description="ไม่มีข้อมูลที่ตรงกับตัวกรองที่เลือก"
               />
             </div>
           ) : (
             <DataTable>
               <THead>
                 <TR>
-                  <TH className="w-10">Sel</TH>
-                  <TH>User</TH>
-                  <TH>Tier</TH>
-                  <TH>Source</TH>
-                  <TH>Expires</TH>
-                  <TH>Status</TH>
-                  <TH className="text-right">Actions</TH>
+                  <TH className="w-10">เลือก</TH>
+                  <TH>ผู้ใช้</TH>
+                  <TH>ประเภทสิทธิ์</TH>
+                  <TH>ที่มา</TH>
+                  <TH>หมดอายุ</TH>
+                  <TH>สถานะ</TH>
+                  <TH className="text-right">จัดการ</TH>
                 </TR>
               </THead>
               <TBody>
@@ -483,7 +500,7 @@ function SubscriptionsPage() {
                           {row.userId}
                         </div>
                       </TD>
-                      <TD>{row.tier}</TD>
+                      <TD>{tierLabel(row)}</TD>
                       <TD className="text-muted-foreground">{row.source}</TD>
                       <TD className="text-muted-foreground">{formatDateOnly(row.expiresAt)}</TD>
                       <TD>{statusBadge(row)}</TD>
@@ -493,7 +510,7 @@ function SubscriptionsPage() {
                           onClick={() => revokeMutation.mutate(row.userId)}
                           className="inline-flex h-7 items-center rounded-md border border-border bg-card px-2 text-[11px] text-foreground hover:bg-muted"
                         >
-                          Revoke
+                          ยกเลิกสิทธิ์
                         </button>
                       </TD>
                     </TR>

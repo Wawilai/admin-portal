@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Search } from "lucide-react";
 
 import {
@@ -41,10 +41,10 @@ export const Route = createFileRoute("/_app/promo")({
 });
 
 const PRESETS = [
-  { id: "all", label: "All" },
-  { id: "active", label: "Active" },
-  { id: "expired", label: "Expired" },
-  { id: "deactivated", label: "Deactivated" },
+  { id: "all", label: "ทั้งหมด" },
+  { id: "active", label: "ใช้งานได้" },
+  { id: "expired", label: "หมดอายุ" },
+  { id: "deactivated", label: "ปิดใช้งาน" },
 ] as const;
 
 type Preset = (typeof PRESETS)[number]["id"];
@@ -55,8 +55,10 @@ function PromoPage() {
   const [page, setPage] = useState(1);
   const [code, setCode] = useState("");
   const [description, setDescription] = useState("");
-  const [discountType, setDiscountType] = useState("free_days");
-  const [discountValue, setDiscountValue] = useState("30");
+  // Backend only honours "free_days" (grants N days of Premium); the other
+  // reward types were never wired into /promo/redeem, so we don't expose them.
+  const discountType = "free_days";
+  const [discountValue, setDiscountValue] = useState("10");
   const [maxUses, setMaxUses] = useState("1");
   const [expiresInDays, setExpiresInDays] = useState("30");
   const [selected, setSelected] = useState<number[]>([]);
@@ -87,18 +89,17 @@ function PromoPage() {
         expiresInDays: Number(expiresInDays),
       }),
     onSuccess: async () => {
-      setFlash("Promo code created.");
+      setFlash("สร้างโค้ดโปรโมชั่นแล้ว");
       setError(null);
       setCode("");
       setDescription("");
-      setDiscountType("free_days");
-      setDiscountValue("30");
+      setDiscountValue("10");
       setMaxUses("1");
       setExpiresInDays("30");
       await queryClient.invalidateQueries({ queryKey: ["promo-codes"] });
     },
     onError: (mutationError) => {
-      setError(extractErrorDetail(mutationError, "Unable to create promo code."));
+      setError(extractErrorDetail(mutationError, "สร้างโค้ดไม่สำเร็จ"));
       setFlash(null);
     },
   });
@@ -107,12 +108,12 @@ function PromoPage() {
     mutationFn: (codeId: number) =>
       apiWrite<{ ok: boolean }>(`/promo/codes/${codeId}/deactivate`, {}),
     onSuccess: async () => {
-      setFlash("Promo code deactivated.");
+      setFlash("ปิดใช้งานโค้ดแล้ว");
       setError(null);
       await queryClient.invalidateQueries({ queryKey: ["promo-codes"] });
     },
     onError: (mutationError) => {
-      setError(extractErrorDetail(mutationError, "Unable to deactivate promo code."));
+      setError(extractErrorDetail(mutationError, "ปิดใช้งานโค้ดไม่สำเร็จ"));
       setFlash(null);
     },
   });
@@ -123,32 +124,24 @@ function PromoPage() {
         codeIds,
       }),
     onSuccess: async (result) => {
-      setFlash(`Deactivated ${result.affected} promo codes.`);
+      setFlash(`ปิดใช้งานโค้ดแล้ว ${result.affected} รายการ`);
       setError(null);
       setSelected([]);
       await queryClient.invalidateQueries({ queryKey: ["promo-codes"] });
     },
     onError: (mutationError) => {
-      setError(extractErrorDetail(mutationError, "Unable to bulk deactivate promo codes."));
+      setError(extractErrorDetail(mutationError, "ปิดใช้งานหลายรายการไม่สำเร็จ"));
       setFlash(null);
     },
   });
 
   const rows = promoQuery.data?.items ?? [];
   const total = promoQuery.data?.total ?? 0;
-  const rewardSummary = useMemo(() => {
-    if (discountType === "free_days") {
-      return `${discountValue || 0} free days`;
-    }
-    if (discountType === "discount_percent") {
-      return `${discountValue || 0}% discount`;
-    }
-    return `${discountValue || 0} bonus credits`;
-  }, [discountType, discountValue]);
+  const rewardSummary = `Premium ฟรี ${discountValue || 0} วัน`;
   const limitSummary =
-    Number(maxUses) > 0 ? `${maxUses} total redeems` : "Unlimited redeems";
+    Number(maxUses) > 0 ? `ใช้ได้ ${maxUses} ครั้ง` : "ใช้ได้ไม่จำกัด";
   const expirySummary =
-    Number(expiresInDays) > 0 ? `Expires in ${expiresInDays} days` : "No expiry";
+    Number(expiresInDays) > 0 ? `โค้ดหมดอายุใน ${expiresInDays} วัน` : "ไม่มีวันหมดอายุ";
   const canCreate =
     code.trim().length > 0 &&
     Number(discountValue) > 0 &&
@@ -158,11 +151,11 @@ function PromoPage() {
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
-        title="Promo codes"
-        subtitle="Create and deactivate promo access codes."
+        title="โค้ดโปรโมชั่น"
+        subtitle="สร้างและจัดการโค้ดสำหรับแจกสิทธิ์ Premium ฟรี"
         actions={
           <span className="text-[11px] text-muted-foreground tabular-nums">
-            {total.toLocaleString()} codes
+            ทั้งหมด {total.toLocaleString()} โค้ด
           </span>
         }
       />
@@ -170,47 +163,44 @@ function PromoPage() {
       {flash ? <InlineAlert variant="success">{flash}</InlineAlert> : null}
       {error ? <InlineAlert variant="danger">{error}</InlineAlert> : null}
       {promoQuery.isError ? (
-        <InlineAlert variant="danger" title="Unable to load promo codes">
-          The list is temporarily unavailable. You can still review the form, but avoid creating new codes until backend connectivity is stable.
+        <InlineAlert variant="danger" title="โหลดรายการโค้ดไม่สำเร็จ">
+          ขณะนี้ยังเชื่อมต่อระบบไม่ได้ ดูฟอร์มได้ตามปกติ แต่ยังไม่ควรสร้างโค้ดใหม่จนกว่าระบบจะกลับมาทำงาน
         </InlineAlert>
       ) : null}
 
       <Panel>
         <PanelHeader
-          title="Create promo code"
-          description="Set the reward, redemption cap, and expiry policy before launch. Use a preset when the campaign matches a common support or marketing pattern."
+          title="สร้างโค้ดใหม่"
+          description="โค้ดโปรโมชั่นจะให้สิทธิ์ Premium ฟรีตามจำนวนวันที่กำหนด ผู้ใช้กรอกโค้ดในแอปเพื่อรับสิทธิ์ — เลือกชุดสำเร็จรูปด้านล่างเพื่อกรอกค่าให้อัตโนมัติ"
         />
         <PanelBody className="flex flex-col gap-5">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <StatTile label="Reward" value={rewardSummary} />
-            <StatTile label="Usage limit" value={limitSummary} />
-            <StatTile label="Expiry" value={expirySummary} />
+            <StatTile label="สิทธิ์ที่ได้รับ" value={rewardSummary} />
+            <StatTile label="จำนวนครั้งที่ใช้ได้" value={limitSummary} />
+            <StatTile label="อายุของโค้ด" value={expirySummary} />
           </div>
 
           <div className="flex flex-wrap gap-2">
             <QuickActionButton
-              label="10-day trial pass"
+              label="ทดลอง 10 วัน (1 คน)"
               onClick={() => {
-                setDiscountType("free_days");
                 setDiscountValue("10");
                 setMaxUses("1");
                 setExpiresInDays("30");
               }}
             />
             <QuickActionButton
-              label="30-day campaign"
+              label="แคมเปญ 30 วัน (100 คน)"
               onClick={() => {
-                setDiscountType("free_days");
                 setDiscountValue("30");
                 setMaxUses("100");
                 setExpiresInDays("14");
               }}
             />
             <QuickActionButton
-              label="Evergreen credit bonus"
+              label="Premium 7 วัน (ไม่จำกัดคน)"
               onClick={() => {
-                setDiscountType("credit_bonus");
-                setDiscountValue("50");
+                setDiscountValue("7");
                 setMaxUses("0");
                 setExpiresInDays("0");
               }}
@@ -218,34 +208,23 @@ function PromoPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Field label="Code">
+            <Field label="โค้ด">
               <input
                 value={code}
                 onChange={(event) => setCode(event.target.value.toUpperCase())}
-                placeholder="RERK001"
+                placeholder="เช่น RERK001"
                 className="h-9 w-full rounded-md border border-border bg-background px-3 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <Field label="Description">
+            <Field label="คำอธิบาย (ภายใน)">
               <input
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Campaign note or operator context"
+                placeholder="บันทึกของแอดมิน เช่น ชื่อแคมเปญ"
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <Field label="Reward type">
-              <select
-                value={discountType}
-                onChange={(event) => setDiscountType(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-              >
-                <option value="free_days">free_days</option>
-                <option value="discount_percent">discount_percent</option>
-                <option value="credit_bonus">credit_bonus</option>
-              </select>
-            </Field>
-            <Field label="Reward value">
+            <Field label="จำนวนวัน Premium ฟรี">
               <input
                 type="number"
                 min="1"
@@ -254,7 +233,7 @@ function PromoPage() {
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <Field label="Max uses">
+            <Field label="ใช้ได้กี่ครั้ง (0 = ไม่จำกัด)">
               <input
                 type="number"
                 min="0"
@@ -263,7 +242,7 @@ function PromoPage() {
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <Field label="Expires in days">
+            <Field label="โค้ดหมดอายุใน (วัน, 0 = ไม่หมด)">
               <input
                 type="number"
                 min="0"
@@ -276,7 +255,9 @@ function PromoPage() {
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.7fr)]">
             <div className="rounded-md border border-border bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
-              Set max uses to <code>0</code> for unlimited redemption. Set expires in days to <code>0</code> when the code should stay available until it is manually deactivated.
+              <strong className="text-foreground">จำนวนวัน Premium ฟรี</strong> = ระยะเวลาที่ผู้ใช้จะได้สิทธิ์หลังกรอกโค้ด ·
+              <strong className="text-foreground"> ใช้ได้กี่ครั้ง</strong> ใส่ <code>0</code> เพื่อให้ใช้ได้ไม่จำกัดคน ·
+              <strong className="text-foreground"> โค้ดหมดอายุ</strong> ใส่ <code>0</code> เพื่อให้โค้ดใช้ได้จนกว่าจะปิดเอง
             </div>
             <div className="flex items-center xl:justify-end">
               <button
@@ -285,7 +266,7 @@ function PromoPage() {
                 disabled={createMutation.isPending || !canCreate}
                 className="inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 xl:w-auto"
               >
-                {createMutation.isPending ? "Creating..." : "Create code"}
+                {createMutation.isPending ? "กำลังสร้าง..." : "สร้างโค้ด"}
               </button>
             </div>
           </div>
@@ -294,8 +275,8 @@ function PromoPage() {
 
       <Panel>
         <PanelHeader
-          title="Current promo codes"
-          description="Review activation state and deactivate codes that should no longer be redeemable."
+          title="โค้ดที่มีอยู่"
+          description="ดูสถานะการใช้งานและปิดโค้ดที่ไม่ต้องการให้ใช้ได้อีก"
         />
         <PanelBody className="px-0 py-0">
           <Toolbar
@@ -306,7 +287,7 @@ function PromoPage() {
                   <input
                     value=""
                     readOnly
-                    placeholder="Promo search is not yet supported by the backend"
+                    placeholder="ระบบยังไม่รองรับการค้นหาโค้ด"
                     className="h-8 w-72 rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-muted-foreground"
                   />
                 </div>
@@ -332,11 +313,11 @@ function PromoPage() {
                   disabled={bulkDeactivateMutation.isPending}
                   className="inline-flex h-8 items-center rounded-md border border-destructive/40 bg-destructive/10 px-3 text-[12px] font-medium text-destructive hover:bg-destructive/15 disabled:opacity-50"
                 >
-                  {bulkDeactivateMutation.isPending ? "Deactivating..." : `Deactivate ${selected.length}`}
+                  {bulkDeactivateMutation.isPending ? "กำลังปิด..." : `ปิด ${selected.length} โค้ด`}
                 </button>
               ) : (
                 <span className="text-[12px] text-muted-foreground tabular-nums">
-                  {total} codes
+                  {total} โค้ด
                 </span>
               )
             }
@@ -349,22 +330,22 @@ function PromoPage() {
           ) : rows.length === 0 ? (
             <div className="px-5 py-10">
               <EmptyState
-                title="No promo codes"
-                description="No promo codes match the current filters."
+                title="ยังไม่มีโค้ด"
+                description="ไม่มีโค้ดที่ตรงกับตัวกรองที่เลือก"
               />
             </div>
           ) : (
             <DataTable>
               <THead>
                 <TR>
-                  <TH className="w-10">Sel</TH>
-                  <TH>Code</TH>
-                  <TH>Reward</TH>
-                  <TH className="text-right">Redeemed</TH>
-                  <TH>Max uses</TH>
-                  <TH>Expiry</TH>
-                  <TH>Status</TH>
-                  <TH className="text-right">Actions</TH>
+                  <TH className="w-10">เลือก</TH>
+                  <TH>โค้ด</TH>
+                  <TH>สิทธิ์ที่ได้</TH>
+                  <TH className="text-right">ใช้ไปแล้ว</TH>
+                  <TH>จำกัดครั้ง</TH>
+                  <TH>หมดอายุ</TH>
+                  <TH>สถานะ</TH>
+                  <TH className="text-right">จัดการ</TH>
                 </TR>
               </THead>
               <TBody>
@@ -390,13 +371,13 @@ function PromoPage() {
                       <TD className="font-mono">{row.code}</TD>
                       <TD>{row.rewardLabel}</TD>
                       <TD className="text-right tabular-nums">{row.usedCount}</TD>
-                      <TD>{row.maxUses ?? "Unlimited"}</TD>
+                      <TD>{row.maxUses ?? "ไม่จำกัด"}</TD>
                       <TD className="text-muted-foreground">{formatDateOnly(row.expiresAt)}</TD>
                       <TD>
                         {row.active ? (
-                          <StatusBadge variant="active">Active</StatusBadge>
+                          <StatusBadge variant="active">ใช้งานได้</StatusBadge>
                         ) : (
-                          <StatusBadge variant="expired">Inactive</StatusBadge>
+                          <StatusBadge variant="expired">ปิดใช้งาน</StatusBadge>
                         )}
                       </TD>
                       <TD className="text-right">
@@ -407,7 +388,7 @@ function PromoPage() {
                             disabled={!row.active}
                             className="inline-flex h-7 items-center rounded-md border border-border bg-card px-2 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
                           >
-                            Deactivate
+                            ปิดใช้งาน
                           </button>
                         ) : null}
                       </TD>

@@ -14,13 +14,13 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSubscriptionsRouteImport } from './routes/_app/subscriptions'
 import { Route as AppRemoteConfigRouteImport } from './routes/_app/remote-config'
-import { Route as AppFeatureAccessRouteImport } from './routes/_app/feature-access'
 import { Route as AppPromoRouteImport } from './routes/_app/promo'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
+import { Route as AppFeatureAccessRouteImport } from './routes/_app/feature-access'
 import { Route as AppCreditsRouteImport } from './routes/_app/credits'
 import { Route as AppAuditLogRouteImport } from './routes/_app/audit-log'
-import { Route as AppAiOpsRouteImport } from './routes/_app/ai-ops'
 import { Route as AppAiUsageRouteImport } from './routes/_app/ai-usage'
+import { Route as AppAiOpsRouteImport } from './routes/_app/ai-ops'
 import { Route as AppAdminUsersRouteImport } from './routes/_app/admin-users'
 import { Route as AppUsersIndexRouteImport } from './routes/_app/users.index'
 import { Route as AppUsersUserIdRouteImport } from './routes/_app/users.$userId'
@@ -49,11 +49,6 @@ const AppRemoteConfigRoute = AppRemoteConfigRouteImport.update({
   path: '/remote-config',
   getParentRoute: () => AppRoute,
 } as any)
-const AppFeatureAccessRoute = AppFeatureAccessRouteImport.update({
-  id: '/feature-access',
-  path: '/feature-access',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppPromoRoute = AppPromoRouteImport.update({
   id: '/promo',
   path: '/promo',
@@ -62,6 +57,11 @@ const AppPromoRoute = AppPromoRouteImport.update({
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFeatureAccessRoute = AppFeatureAccessRouteImport.update({
+  id: '/feature-access',
+  path: '/feature-access',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCreditsRoute = AppCreditsRouteImport.update({
@@ -74,14 +74,14 @@ const AppAuditLogRoute = AppAuditLogRouteImport.update({
   path: '/audit-log',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAiOpsRoute = AppAiOpsRouteImport.update({
-  id: '/ai-ops',
-  path: '/ai-ops',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppAiUsageRoute = AppAiUsageRouteImport.update({
   id: '/ai-usage',
   path: '/ai-usage',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAiOpsRoute = AppAiOpsRouteImport.update({
+  id: '/ai-ops',
+  path: '/ai-ops',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
@@ -258,18 +258,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/credits': {
-      id: '/_app/credits'
-      path: '/credits'
-      fullPath: '/credits'
-      preLoaderRoute: typeof AppCreditsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/feature-access': {
       id: '/_app/feature-access'
       path: '/feature-access'
       fullPath: '/feature-access'
       preLoaderRoute: typeof AppFeatureAccessRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/credits': {
+      id: '/_app/credits'
+      path: '/credits'
+      fullPath: '/credits'
+      preLoaderRoute: typeof AppCreditsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/audit-log': {
@@ -279,18 +279,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAuditLogRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/ai-ops': {
-      id: '/_app/ai-ops'
-      path: '/ai-ops'
-      fullPath: '/ai-ops'
-      preLoaderRoute: typeof AppAiOpsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/ai-usage': {
       id: '/_app/ai-usage'
       path: '/ai-usage'
       fullPath: '/ai-usage'
       preLoaderRoute: typeof AppAiUsageRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ai-ops': {
+      id: '/_app/ai-ops'
+      path: '/ai-ops'
+      fullPath: '/ai-ops'
+      preLoaderRoute: typeof AppAiOpsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/admin-users': {
