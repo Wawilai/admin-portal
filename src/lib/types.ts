@@ -109,6 +109,27 @@ export interface AiConfig {
   maskedApiKey: string;
 }
 
+export interface AiUsageRow {
+  id: string;
+  feature: string;
+  userId: string;
+  success: boolean;
+  responseMs: number;
+  model: string;
+  createdAt: string;
+}
+
+export interface AiUsageSummary {
+  totalCalls: number;
+  successRate: number;
+  avgLatencyMs: number;
+  topModel: string;
+}
+
+export interface AiUsageResponse extends PaginatedResponse<AiUsageRow> {
+  summary: AiUsageSummary;
+}
+
 export interface RemoteConfig {
   storeUrlAndroid: string;
   storeUrlIos: string;

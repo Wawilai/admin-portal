@@ -19,6 +19,7 @@ import { Route as AppNotificationsRouteImport } from './routes/_app/notification
 import { Route as AppCreditsRouteImport } from './routes/_app/credits'
 import { Route as AppAuditLogRouteImport } from './routes/_app/audit-log'
 import { Route as AppAiOpsRouteImport } from './routes/_app/ai-ops'
+import { Route as AppAiUsageRouteImport } from './routes/_app/ai-usage'
 import { Route as AppAdminUsersRouteImport } from './routes/_app/admin-users'
 import { Route as AppUsersIndexRouteImport } from './routes/_app/users.index'
 import { Route as AppUsersUserIdRouteImport } from './routes/_app/users.$userId'
@@ -72,6 +73,11 @@ const AppAiOpsRoute = AppAiOpsRouteImport.update({
   path: '/ai-ops',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAiUsageRoute = AppAiUsageRouteImport.update({
+  id: '/ai-usage',
+  path: '/ai-usage',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAdminUsersRoute = AppAdminUsersRouteImport.update({
   id: '/admin-users',
   path: '/admin-users',
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/admin-users': typeof AppAdminUsersRoute
   '/ai-ops': typeof AppAiOpsRoute
+  '/ai-usage': typeof AppAiUsageRoute
   '/audit-log': typeof AppAuditLogRoute
   '/credits': typeof AppCreditsRoute
   '/notifications': typeof AppNotificationsRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin-users': typeof AppAdminUsersRoute
   '/ai-ops': typeof AppAiOpsRoute
+  '/ai-usage': typeof AppAiUsageRoute
   '/audit-log': typeof AppAuditLogRoute
   '/credits': typeof AppCreditsRoute
   '/notifications': typeof AppNotificationsRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_app/admin-users': typeof AppAdminUsersRoute
   '/_app/ai-ops': typeof AppAiOpsRoute
+  '/_app/ai-usage': typeof AppAiUsageRoute
   '/_app/audit-log': typeof AppAuditLogRoute
   '/_app/credits': typeof AppCreditsRoute
   '/_app/notifications': typeof AppNotificationsRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin-users'
     | '/ai-ops'
+    | '/ai-usage'
     | '/audit-log'
     | '/credits'
     | '/notifications'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin-users'
     | '/ai-ops'
+    | '/ai-usage'
     | '/audit-log'
     | '/credits'
     | '/notifications'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_app/admin-users'
     | '/_app/ai-ops'
+    | '/_app/ai-usage'
     | '/_app/audit-log'
     | '/_app/credits'
     | '/_app/notifications'
@@ -255,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAiOpsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ai-usage': {
+      id: '/_app/ai-usage'
+      path: '/ai-usage'
+      fullPath: '/ai-usage'
+      preLoaderRoute: typeof AppAiUsageRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/admin-users': {
       id: '/_app/admin-users'
       path: '/admin-users'
@@ -282,6 +301,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAdminUsersRoute: typeof AppAdminUsersRoute
   AppAiOpsRoute: typeof AppAiOpsRoute
+  AppAiUsageRoute: typeof AppAiUsageRoute
   AppAuditLogRoute: typeof AppAuditLogRoute
   AppCreditsRoute: typeof AppCreditsRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -296,6 +316,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAdminUsersRoute: AppAdminUsersRoute,
   AppAiOpsRoute: AppAiOpsRoute,
+  AppAiUsageRoute: AppAiUsageRoute,
   AppAuditLogRoute: AppAuditLogRoute,
   AppCreditsRoute: AppCreditsRoute,
   AppNotificationsRoute: AppNotificationsRoute,

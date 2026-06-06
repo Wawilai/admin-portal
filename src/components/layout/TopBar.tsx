@@ -10,6 +10,7 @@ const LABELS: Record<string, string> = {
   subscriptions: "Subscriptions",
   promo: "Promo",
   "ai-ops": "AI Ops",
+  "ai-usage": "AI Usage",
   notifications: "Notifications",
   "remote-config": "Remote Config",
   "audit-log": "Audit Log",
