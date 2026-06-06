@@ -37,7 +37,9 @@ Ship the first production-ready `admin-api` endpoints needed by the React admin 
 ## Data Tasks
 
 - [ ] Confirm which table is the source of truth for user locale
-- [ ] Confirm whether zodiac and element should come from profile data or stay nullable
+- [x] Confirm whether zodiac and element should come from profile data or stay nullable
+  zodiac: sourced from user_fcm_tokens.zodiac_key (sent by Flutter on token registration)
+  element: requires birth_date (heavenly stem cycle) — not stored backend-side; returns null until profile sync is added
 - [ ] Confirm whether device state should come from FCM registrations
 - [ ] Add a stable query for recent AI usage by user and feature
 
