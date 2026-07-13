@@ -46,7 +46,7 @@ const sections = [
     body: [
       "You can update or delete local profiles and many preferences inside the app.",
       "You can disable push notifications in the app or in your device settings.",
-      "You may request account or data deletion by using the in-app account deletion controls where available or by contacting us at privacy@rerkdee.app.",
+      "You may request account or data deletion by using the in-app account deletion controls where available or by contacting us at worapon.wawi@gmail.com",
       "Deleting your account or app data may remove access to synced profile data, subscriptions managed by us, credit balances, and personalized history, except where retention is required for legal, security, or payment records.",
     ],
   },
@@ -108,9 +108,9 @@ function PrivacyPolicyPage() {
             requests, contact us at{" "}
             <a
               className="font-medium text-primary underline-offset-4 hover:underline"
-              href="mailto:privacy@rerkdee.app"
+              href="mailto:worapon.wawi@gmail.com"
             >
-              privacy@rerkdee.app
+              worapon.wawi@gmail.com
             </a>
             .
           </p>
