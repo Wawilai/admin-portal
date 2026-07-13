@@ -142,7 +142,7 @@ function PrivacyPolicyPage() {
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Depending on your location, you may have rights to access, correct,
             delete, restrict, or object to certain processing of your personal
-            information. Contact us at privacy@rerkdee.app to submit a request.
+            information. Contact us at worapon.wawi@gmail.com to submit a request.
           </p>
         </section>
       </div>
