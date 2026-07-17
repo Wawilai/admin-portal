@@ -122,7 +122,7 @@ function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
         <main className="flex-1 overflow-x-hidden">
-          <div className="mx-auto w-full max-w-[1400px] px-6 py-6">
+          <div className="mx-auto w-full max-w-[1400px] px-4 py-4 sm:px-6 sm:py-6">
             <Outlet />
           </div>
         </main>

@@ -16,8 +16,12 @@ import {
   EmptyState,
   InlineAlert,
   LoadingSkeleton,
+  StatusBadge,
+  RecordList,
+  RecordCard,
+  RecordField,
 } from "@/components/ui-portal";
-import { Search } from "lucide-react";
+import { Search, ScrollText } from "lucide-react";
 import { apiGet, buildApiPath } from "@/lib/api";
 import { formatDateTime } from "@/lib/formatters";
 import type { AuditRow, PaginatedResponse } from "@/lib/types";
@@ -72,7 +76,7 @@ function formatList(value: unknown) {
 function AuditDetails({ row }: { row: AuditRow }) {
   const metadata = parseMetadata(row.metadataJson);
   if (!metadata) {
-    return <span className="text-muted-foreground">No details</span>;
+    return <span className="text-muted-foreground/60">No details</span>;
   }
 
   if (row.action.startsWith("billing.")) {
@@ -83,20 +87,77 @@ function AuditDetails({ row }: { row: AuditRow }) {
     const errorMessage = String(metadata.errorMessage ?? "");
 
     return (
-      <div className="flex max-w-[460px] flex-col gap-0.5 font-mono text-[12px] leading-5 text-muted-foreground">
-        <span>Returned: {returnedIds}</span>
-        <span>Not found: {notFoundIds}</span>
-        <span>Missing credits: {missingCreditIds}</span>
-        <span>Store: {storeAvailable}</span>
-        {errorMessage ? <span>Error: {errorMessage}</span> : null}
+      <div className="flex max-w-[420px] flex-col gap-1 text-[12px] leading-5">
+        <DetailRow label="Returned" value={returnedIds} />
+        <DetailRow label="Not found" value={notFoundIds} />
+        <DetailRow label="Missing credits" value={missingCreditIds} />
+        <DetailRow label="Store" value={storeAvailable} />
+        {errorMessage ? <DetailRow label="Error" value={errorMessage} tone="danger" /> : null}
       </div>
     );
   }
 
-  const raw = row.metadataJson ?? "";
+  const entries = Object.entries(metadata);
+  if (entries.length === 0) {
+    return <span className="text-muted-foreground/60">No details</span>;
+  }
+
   return (
-    <span className="block max-w-[460px] truncate font-mono text-[12px] text-muted-foreground">
-      {raw.length > 180 ? `${raw.slice(0, 180)}...` : raw}
+    <div className="flex max-w-[420px] flex-col gap-1 text-[12px] leading-5">
+      {entries.slice(0, 4).map(([key, value]) => (
+        <DetailRow key={key} label={key} value={formatDetailValue(value)} />
+      ))}
+      {entries.length > 4 ? (
+        <span className="text-muted-foreground/60">+{entries.length - 4} more</span>
+      ) : null}
+    </div>
+  );
+}
+
+function formatDetailValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (Array.isArray(value)) return formatList(value);
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function DetailRow({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "danger";
+}) {
+  return (
+    <div className="flex min-w-0 items-baseline gap-1.5">
+      <span className="shrink-0 text-muted-foreground/70">{label}:</span>
+      <span
+        className={
+          "min-w-0 truncate font-mono " +
+          (tone === "danger" ? "text-destructive" : "text-foreground/80")
+        }
+        title={value}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+const ROLE_VARIANT: Record<string, "danger" | "info" | "neutral"> = {
+  super_admin: "danger",
+  admin: "info",
+};
+
+function ActionBadge({ action }: { action: string }) {
+  const [group] = action.split(".");
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-1.5 py-0.5 text-[11px] font-medium text-foreground">
+      <span className="text-muted-foreground">{group}</span>
+      <span className="text-border">/</span>
+      {action.slice(group.length + 1)}
     </span>
   );
 }
@@ -141,7 +202,7 @@ function AuditLogPage() {
         <Toolbar
           left={
             <>
-              <div className="relative">
+              <div className="relative w-full sm:w-72">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   value={search}
@@ -150,21 +211,23 @@ function AuditLogPage() {
                     setPage(1);
                   }}
                   placeholder="Search actor, action, target…"
-                  className="h-8 w-72 rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+                  className="h-8 w-full rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
                 />
               </div>
-              {PRESETS.map((item) => (
-                <FilterChip
-                  key={item.id}
-                  active={preset === item.id}
-                  onClick={() => {
-                    setPreset(item.id);
-                    setPage(1);
-                  }}
-                >
-                  {item.label}
-                </FilterChip>
-              ))}
+              <div className="flex flex-wrap items-center gap-2">
+                {PRESETS.map((item) => (
+                  <FilterChip
+                    key={item.id}
+                    active={preset === item.id}
+                    onClick={() => {
+                      setPreset(item.id);
+                      setPage(1);
+                    }}
+                  >
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
             </>
           }
           right={
@@ -180,13 +243,17 @@ function AuditLogPage() {
           </div>
         ) : rows.length === 0 ? (
           <div className="px-5 py-12">
-            <EmptyState title="No audit events" description="No rows match the current filters." />
+            <EmptyState
+              icon={ScrollText}
+              title="No audit events"
+              description="No rows match the current filters."
+            />
           </div>
         ) : (
           <DataTable>
             <THead>
               <TR>
-                <TH>When</TH>
+                <TH className="whitespace-nowrap">When</TH>
                 <TH>Actor</TH>
                 <TH>Role</TH>
                 <TH>Action</TH>
@@ -196,12 +263,22 @@ function AuditLogPage() {
             </THead>
             <TBody>
               {rows.map((row) => (
-                <TR key={row.id}>
-                  <TD className="text-muted-foreground">{formatDateTime(row.createdAt)}</TD>
+                <TR key={row.id} zebra>
+                  <TD nowrap className="text-muted-foreground tabular-nums">
+                    {formatDateTime(row.createdAt)}
+                  </TD>
                   <TD className="font-medium">{row.actor}</TD>
-                  <TD>{row.role}</TD>
-                  <TD>{row.action}</TD>
-                  <TD className="font-mono text-[12px] text-muted-foreground">{row.target}</TD>
+                  <TD>
+                    <StatusBadge variant={ROLE_VARIANT[row.role] ?? "neutral"} dot={false}>
+                      {row.role}
+                    </StatusBadge>
+                  </TD>
+                  <TD>
+                    <ActionBadge action={row.action} />
+                  </TD>
+                  <TD className="max-w-[200px] truncate font-mono text-[12px] text-muted-foreground" title={row.target}>
+                    {row.target}
+                  </TD>
                   <TD>
                     <AuditDetails row={row} />
                   </TD>
@@ -210,6 +287,33 @@ function AuditLogPage() {
             </TBody>
           </DataTable>
         )}
+
+        {!auditQuery.isLoading && rows.length > 0 ? (
+          <RecordList>
+            {rows.map((row) => (
+              <RecordCard key={row.id}>
+                <RecordField>
+                  <span className="min-w-0 truncate font-medium text-foreground">{row.actor}</span>
+                  <span className="shrink-0 whitespace-nowrap text-[12px] tabular-nums text-muted-foreground">
+                    {formatDateTime(row.createdAt)}
+                  </span>
+                </RecordField>
+                <RecordField>
+                  <ActionBadge action={row.action} />
+                  <StatusBadge variant={ROLE_VARIANT[row.role] ?? "neutral"} dot={false}>
+                    {row.role}
+                  </StatusBadge>
+                </RecordField>
+                <RecordField label="Target">
+                  <span className="font-mono text-[12px]">{row.target}</span>
+                </RecordField>
+                <div className="border-t border-border/70 pt-2">
+                  <AuditDetails row={row} />
+                </div>
+              </RecordCard>
+            ))}
+          </RecordList>
+        ) : null}
 
         <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
       </Panel>

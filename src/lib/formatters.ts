@@ -8,13 +8,15 @@ export function formatDateTime(value?: string | null) {
     return value;
   }
 
-  return parsed.toLocaleString(undefined, {
-    year: "numeric",
+  const datePart = parsed.toLocaleDateString(undefined, {
     month: "short",
     day: "2-digit",
+  });
+  const timePart = parsed.toLocaleTimeString(undefined, {
     hour: "2-digit",
     minute: "2-digit",
   });
+  return `${datePart}, ${timePart}`;
 }
 
 export function formatDateOnly(value?: string | null) {
