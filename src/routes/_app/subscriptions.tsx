@@ -5,6 +5,7 @@ import { ChevronDown, Search } from "lucide-react";
 
 import {
   EmptyState,
+  HelperNote,
   InlineAlert,
   LoadingSkeleton,
   PageHeader,
@@ -12,7 +13,7 @@ import {
   Panel,
   PanelBody,
   PanelHeader,
-  StatTile,
+  PreviewRow,
   StatusBadge,
   Toolbar,
   FilterChip,
@@ -222,11 +223,13 @@ function SubscriptionsPage() {
           description="เลือกชุดสำเร็จรูปสำหรับงานที่ใช้บ่อย แล้วตรวจวันหมดอายุก่อนบันทึก"
         />
         <PanelBody className="flex flex-col gap-5">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <StatTile label="ประเภทสิทธิ์" value={accessSummary} />
-            <StatTile label="ช่องทางที่มา" value={platform} />
-            <StatTile label="วันหมดอายุ" value={expirySummary} />
-          </div>
+          <HelperNote>
+            <div className="flex flex-col gap-1.5">
+              <PreviewRow label="ประเภทสิทธิ์" value={accessSummary} />
+              <PreviewRow label="ช่องทางที่มา" value={platform} />
+              <PreviewRow label="วันหมดอายุ" value={expirySummary} />
+            </div>
+          </HelperNote>
 
           <div className="flex flex-wrap gap-2">
             <QuickActionButton
@@ -335,10 +338,10 @@ function SubscriptionsPage() {
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
-            <div className="rounded-md border border-border bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
+            <HelperNote>
               ใช้ช่องนี้เมื่อต้องการกู้คืนการซื้อ หรือกำหนดวันหมดอายุให้ตรงกับสิทธิ์จากภายนอก ·
               ถ้าเว้นว่าง ระบบจะใช้ "จำนวนวัน" ด้านบนแทน
-            </div>
+            </HelperNote>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

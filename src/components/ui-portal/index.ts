@@ -8,3 +8,4 @@ export { Pagination } from "./Pagination";
 export { EmptyState } from "./EmptyState";
 export { InlineAlert } from "./InlineAlert";
 export { LoadingSkeleton, SkeletonRow } from "./LoadingSkeleton";
+export { HelperNote, PreviewRow } from "./HelperNote";

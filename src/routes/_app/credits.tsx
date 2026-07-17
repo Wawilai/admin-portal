@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   DataTable,
+  HelperNote,
   InlineAlert,
   LoadingSkeleton,
   PageHeader,
   Panel,
   PanelBody,
   PanelHeader,
+  PreviewRow,
   StatTile,
   TBody,
   TD,
@@ -135,9 +137,9 @@ function CreditsPage() {
                 description="Set the free daily base used by all eligible users."
               />
               <PanelBody className="flex flex-col gap-4">
-                <div className="rounded-md border border-border bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
+                <HelperNote>
                   This value controls the baseline quota before any top-ups or bonus balances are applied.
-                </div>
+                </HelperNote>
                 <Field label="Free daily base">
                   <input
                     type="number"
@@ -163,10 +165,12 @@ function CreditsPage() {
                 description="Manual balance adjustments are recorded in the audit log."
               />
               <PanelBody className="flex flex-col gap-5">
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  <StatTile label="Pending action" value={adjustmentSummary} />
-                  <StatTile label="Target user" value={userId.trim() || "Enter a user ID"} />
-                </div>
+                <HelperNote>
+                  <div className="flex flex-col gap-1.5">
+                    <PreviewRow label="Pending action" value={adjustmentSummary} />
+                    <PreviewRow label="Target user" value={userId.trim() || "Not set"} />
+                  </div>
+                </HelperNote>
 
                 <div className="flex flex-wrap gap-2">
                   <QuickActionButton label="+10" onClick={() => setDelta("10")} />

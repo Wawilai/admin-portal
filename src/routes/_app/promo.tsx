@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Search } from "lucide-react";
 
 import {
   DataTable,
   EmptyState,
   FilterChip,
+  HelperNote,
   InlineAlert,
   LoadingSkeleton,
   PageHeader,
@@ -14,7 +14,7 @@ import {
   Panel,
   PanelBody,
   PanelHeader,
-  StatTile,
+  PreviewRow,
   StatusBadge,
   TBody,
   TD,
@@ -174,11 +174,13 @@ function PromoPage() {
           description="โค้ดโปรโมชั่นจะให้สิทธิ์ Premium ฟรีตามจำนวนวันที่กำหนด ผู้ใช้กรอกโค้ดในแอปเพื่อรับสิทธิ์ — เลือกชุดสำเร็จรูปด้านล่างเพื่อกรอกค่าให้อัตโนมัติ"
         />
         <PanelBody className="flex flex-col gap-5">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <StatTile label="สิทธิ์ที่ได้รับ" value={rewardSummary} />
-            <StatTile label="จำนวนครั้งที่ใช้ได้" value={limitSummary} />
-            <StatTile label="อายุของโค้ด" value={expirySummary} />
-          </div>
+          <HelperNote>
+            <div className="flex flex-col gap-1.5">
+              <PreviewRow label="สิทธิ์ที่ได้รับ" value={rewardSummary} />
+              <PreviewRow label="จำนวนครั้งที่ใช้ได้" value={limitSummary} />
+              <PreviewRow label="อายุของโค้ด" value={expirySummary} />
+            </div>
+          </HelperNote>
 
           <div className="flex flex-wrap gap-2">
             <QuickActionButton
@@ -254,11 +256,11 @@ function PromoPage() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.7fr)]">
-            <div className="rounded-md border border-border bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
+            <HelperNote>
               <strong className="text-foreground">จำนวนวัน Premium ฟรี</strong> = ระยะเวลาที่ผู้ใช้จะได้สิทธิ์หลังกรอกโค้ด ·
               <strong className="text-foreground"> ใช้ได้กี่ครั้ง</strong> ใส่ <code>0</code> เพื่อให้ใช้ได้ไม่จำกัดคน ·
               <strong className="text-foreground"> โค้ดหมดอายุ</strong> ใส่ <code>0</code> เพื่อให้โค้ดใช้ได้จนกว่าจะปิดเอง
-            </div>
+            </HelperNote>
             <div className="flex items-center xl:justify-end">
               <button
                 type="button"
@@ -281,16 +283,7 @@ function PromoPage() {
         <PanelBody className="px-0 py-0">
           <Toolbar
             left={
-              <>
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    value=""
-                    readOnly
-                    placeholder="ระบบยังไม่รองรับการค้นหาโค้ด"
-                    className="h-8 w-72 rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-muted-foreground"
-                  />
-                </div>
+              <div className="flex flex-wrap items-center gap-2">
                 {PRESETS.map((item) => (
                   <FilterChip
                     key={item.id}
@@ -303,7 +296,7 @@ function PromoPage() {
                     {item.label}
                   </FilterChip>
                 ))}
-              </>
+              </div>
             }
             right={
               selected.length > 0 ? (

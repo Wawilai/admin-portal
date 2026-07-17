@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  HelperNote,
   InlineAlert,
   LoadingSkeleton,
   PageHeader,
@@ -91,6 +92,9 @@ function FeatureAccessPage() {
     [features, loadedFeatures],
   );
 
+  // Counts reflect the saved config (loadedFeatures), not in-progress edits —
+  // a KPI should report what's actually live, not a value that shifts as the
+  // admin toggles checkboxes before saving.
   const featureSummary = useMemo(() => {
     let freeForAll = 0;
     let premiumOnly = 0;
@@ -98,7 +102,7 @@ function FeatureAccessPage() {
     let custom = 0;
 
     FEATURE_ROWS.forEach(({ key }) => {
-      const access = normalizeAccess(features[key] ?? []);
+      const access = normalizeAccess(loadedFeatures[key] ?? []);
       const signature = access.join(",");
       if (signature === "free,trial,premium") {
         freeForAll += 1;
@@ -112,7 +116,7 @@ function FeatureAccessPage() {
     });
 
     return { freeForAll, premiumOnly, premiumAndTrial, custom };
-  }, [features]);
+  }, [loadedFeatures]);
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -227,33 +231,35 @@ function FeatureAccessPage() {
                 </table>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-muted/20 px-4 py-3">
-                <p className="text-xs text-muted-foreground">
-                  Use this page when product or support teams need to open, restrict, or trial a feature without changing app code.
-                </p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFeatures(loadedFeatures);
-                      setFlash(null);
-                      setError(null);
-                    }}
-                    disabled={!isDirty || saveMutation.isPending}
-                    className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-[13px] font-medium text-foreground hover:bg-muted disabled:opacity-50"
-                  >
-                    Reset changes
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => saveMutation.mutate()}
-                    disabled={saveMutation.isPending || !isDirty}
-                    className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {saveMutation.isPending ? "Saving..." : "Save feature access"}
-                  </button>
+              <HelperNote>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p>
+                    Use this page when product or support teams need to open, restrict, or trial a feature without changing app code.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeatures(loadedFeatures);
+                        setFlash(null);
+                        setError(null);
+                      }}
+                      disabled={!isDirty || saveMutation.isPending}
+                      className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-[13px] font-medium text-foreground hover:bg-muted disabled:opacity-50"
+                    >
+                      Reset changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => saveMutation.mutate()}
+                      disabled={saveMutation.isPending || !isDirty}
+                      className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {saveMutation.isPending ? "Saving..." : "Save feature access"}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </HelperNote>
             </PanelBody>
           </Panel>
         </div>
