@@ -3,7 +3,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  Button,
+  Field,
+  HelperNote,
   InlineAlert,
+  Input,
   LoadingSkeleton,
   PageHeader,
   Panel,
@@ -128,86 +132,54 @@ function RemoteConfigPage() {
                 label="Android store URL"
                 hint="Used when Android clients are prompted to update."
               >
-                <input
-                  value={android}
-                  onChange={(event) => setAndroid(event.target.value)}
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-                />
+                <Input value={android} onChange={(event) => setAndroid(event.target.value)} />
               </Field>
               <Field
                 label="iOS store URL"
                 hint="Used when iPhone and iPad clients need the App Store destination."
               >
-                <input
-                  value={ios}
-                  onChange={(event) => setIos(event.target.value)}
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-                />
+                <Input value={ios} onChange={(event) => setIos(event.target.value)} />
               </Field>
               <Field
                 label="Web store URL"
                 hint="Fallback destination for web and cross-platform upgrade prompts."
               >
-                <input
-                  value={web}
-                  onChange={(event) => setWeb(event.target.value)}
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-                />
+                <Input value={web} onChange={(event) => setWeb(event.target.value)} />
               </Field>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-muted/20 px-4 py-3">
-              <p className="text-xs text-muted-foreground">
-                Feature gating now lives under the dedicated <span className="font-medium text-foreground">Feature Access</span> menu so operators can manage access rules separately from store configuration.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAndroid(loadedState.android);
-                    setIos(loadedState.ios);
-                    setWeb(loadedState.web);
-                    setFlash(null);
-                    setError(null);
-                  }}
-                  disabled={!isDirty || saveMutation.isPending}
-                  className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-[13px] font-medium text-foreground hover:bg-muted disabled:opacity-50"
-                >
-                  Reset changes
-                </button>
-                <button
-                  type="button"
-                  onClick={() => saveMutation.mutate()}
-                  disabled={saveMutation.isPending || !isDirty}
-                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {saveMutation.isPending ? "Saving..." : "Save remote config"}
-                </button>
+            <HelperNote>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p>
+                  Feature gating now lives under the dedicated <span className="font-medium text-foreground">Feature Access</span> menu so operators can manage access rules separately from store configuration.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setAndroid(loadedState.android);
+                      setIos(loadedState.ios);
+                      setWeb(loadedState.web);
+                      setFlash(null);
+                      setError(null);
+                    }}
+                    disabled={!isDirty || saveMutation.isPending}
+                  >
+                    Reset changes
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => saveMutation.mutate()}
+                    disabled={saveMutation.isPending || !isDirty}
+                  >
+                    {saveMutation.isPending ? "Saving..." : "Save remote config"}
+                  </Button>
+                </div>
               </div>
-            </div>
+            </HelperNote>
           </PanelBody>
         </Panel>
       )}
     </div>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <div className="mt-1.5">{children}</div>
-      <p className="mt-1.5 text-xs leading-5 text-muted-foreground">{hint}</p>
-    </label>
   );
 }

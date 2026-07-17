@@ -2,19 +2,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+  Button,
+  DataTable,
+  Field,
+  InlineAlert,
+  Input,
+  LoadingSkeleton,
   PageHeader,
   Panel,
-  PanelHeader,
   PanelBody,
+  PanelHeader,
+  Select,
   StatusBadge,
-  InlineAlert,
-  DataTable,
-  THead,
-  TH,
   TBody,
-  TR,
   TD,
-  LoadingSkeleton,
+  TH,
+  THead,
+  TR,
 } from "@/components/ui-portal";
 import { apiGet, apiWrite, extractErrorDetail } from "@/lib/api";
 import type { AiConfig } from "@/lib/types";
@@ -107,35 +111,29 @@ function AIOpsPage() {
                 </div>
               </Field>
               <Field label="Replacement API key">
-                <input
+                <Input
                   type="password"
                   value={apiKey}
                   onChange={(event) => setApiKey(event.target.value)}
                   placeholder="Paste a new Gemini API key"
-                  className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
                 />
               </Field>
               <Field label="Primary model">
-                <select
-                  value={model}
-                  onChange={(event) => setModel(event.target.value)}
-                  className="h-9 w-full rounded-md border border-border bg-background px-2.5 text-sm text-foreground focus:border-primary focus:outline-none"
-                >
+                <Select value={model} onChange={(event) => setModel(event.target.value)}>
                   {(config?.availableModels ?? []).map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>
                   ))}
-                </select>
+                </Select>
               </Field>
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending}
-                className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {saveMutation.isPending ? "Saving…" : "Save configuration"}
-              </button>
+              </Button>
             </PanelBody>
           </Panel>
 
@@ -176,16 +174,5 @@ function AIOpsPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <div className="mt-1.5">{children}</div>
-    </label>
   );
 }

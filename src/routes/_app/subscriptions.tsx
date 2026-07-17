@@ -4,9 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 
 import {
+  Button,
+  DataTable,
   EmptyState,
+  Field,
+  FilterChip,
   HelperNote,
   InlineAlert,
+  Input,
   LoadingSkeleton,
   PageHeader,
   Pagination,
@@ -14,15 +19,17 @@ import {
   PanelBody,
   PanelHeader,
   PreviewRow,
+  RecordCard,
+  RecordField,
+  RecordList,
+  Select,
   StatusBadge,
-  Toolbar,
-  FilterChip,
-  DataTable,
-  THead,
-  TH,
   TBody,
-  TR,
   TD,
+  TH,
+  THead,
+  TR,
+  Toolbar,
 } from "@/components/ui-portal";
 import { apiGet, apiWrite, buildApiPath, extractErrorDetail } from "@/lib/api";
 import { formatDateOnly } from "@/lib/formatters";
@@ -232,8 +239,8 @@ function SubscriptionsPage() {
           </HelperNote>
 
           <div className="flex flex-wrap gap-2">
-            <QuickActionButton
-              label="พรีเมียม รายเดือน"
+            <Button
+              size="sm"
               onClick={() => {
                 setProductId("premium_monthly");
                 setTier("premium");
@@ -241,9 +248,11 @@ function SubscriptionsPage() {
                 setDurationDays("30");
                 setExpiresAt("");
               }}
-            />
-            <QuickActionButton
-              label="พรีเมียม รายปี"
+            >
+              พรีเมียม รายเดือน
+            </Button>
+            <Button
+              size="sm"
               onClick={() => {
                 setProductId("premium_yearly");
                 setTier("premium");
@@ -251,9 +260,11 @@ function SubscriptionsPage() {
                 setDurationDays("365");
                 setExpiresAt("");
               }}
-            />
-            <QuickActionButton
-              label="ทดลองใช้ 10 วัน"
+            >
+              พรีเมียม รายปี
+            </Button>
+            <Button
+              size="sm"
               onClick={() => {
                 setProductId("trial_10_days");
                 setTier("trial");
@@ -261,81 +272,67 @@ function SubscriptionsPage() {
                 setDurationDays("10");
                 setExpiresAt("");
               }}
-            />
+            >
+              ทดลองใช้ 10 วัน
+            </Button>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Field label="รหัสผู้ใช้ (User ID)">
-              <input
+              <Input
                 value={userId}
                 onChange={(event) => setUserId(event.target.value)}
                 placeholder="เช่น uid_001"
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
             <Field label="อีเมล (ไม่บังคับ)">
-              <input
+              <Input
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="user@example.com"
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
             <Field label="แพ็กเกจ">
-              <select
-                value={productId}
-                onChange={(event) => setProductId(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-              >
+              <Select value={productId} onChange={(event) => setProductId(event.target.value)}>
                 <option value="premium_monthly">พรีเมียม รายเดือน</option>
                 <option value="premium_yearly">พรีเมียม รายปี</option>
                 <option value="trial_10_days">ทดลองใช้ 10 วัน</option>
                 <option value="manual_override">กำหนดเอง</option>
-              </select>
+              </Select>
             </Field>
             <Field label="ช่องทางที่มา">
-              <select
-                value={platform}
-                onChange={(event) => setPlatform(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-              >
+              <Select value={platform} onChange={(event) => setPlatform(event.target.value)}>
                 <option value="manual">ให้เองโดยแอดมิน</option>
                 <option value="promo">โปรโมชั่น</option>
                 <option value="ios">App Store (iOS)</option>
                 <option value="android">Google Play</option>
                 <option value="stripe">Stripe</option>
-              </select>
+              </Select>
             </Field>
             <Field label="ประเภทสิทธิ์">
-              <select
-                value={tier}
-                onChange={(event) => setTier(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-              >
+              <Select value={tier} onChange={(event) => setTier(event.target.value)}>
                 <option value="premium">พรีเมียม (ใช้ได้ไม่จำกัด)</option>
                 <option value="trial">ทดลองใช้ (ใช้ได้ไม่จำกัด มีวันหมด)</option>
-              </select>
+              </Select>
             </Field>
             <Field label="จำนวนวัน">
-              <input
+              <Input
                 type="number"
                 min="1"
                 max="3650"
                 value={durationDays}
                 onChange={(event) => setDurationDays(event.target.value)}
                 disabled={Boolean(expiresAt)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none disabled:opacity-50"
               />
             </Field>
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
             <Field label="กำหนดวันหมดอายุเอง (ไม่บังคับ)">
-              <input
+              <Input
                 type="datetime-local"
                 value={expiresAt}
                 onChange={(event) => setExpiresAt(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
             <HelperNote>
@@ -345,8 +342,7 @@ function SubscriptionsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <QuickActionButton
-              label="ตั้งค่าตามแพ็กเกจ"
+            <Button
               onClick={() => {
                 if (productId === "premium_yearly") {
                   setTier("premium");
@@ -360,15 +356,16 @@ function SubscriptionsPage() {
                 }
                 setExpiresAt("");
               }}
-            />
-            <button
-              type="button"
+            >
+              ตั้งค่าตามแพ็กเกจ
+            </Button>
+            <Button
+              variant="primary"
               onClick={() => grantMutation.mutate()}
               disabled={grantMutation.isPending || !canGrant}
-              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {grantMutation.isPending ? "กำลังบันทึก..." : "ให้สิทธิ์"}
-            </button>
+            </Button>
           </div>
         </PanelBody>
       </Panel>
@@ -382,34 +379,36 @@ function SubscriptionsPage() {
           <Toolbar
             left={
               <>
-                <div className="relative">
+                <div className="relative w-full sm:w-72">
                   <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <input
+                  <Input
                     value={search}
                     onChange={(event) => {
                       setSearch(event.target.value);
                       setPage(1);
                     }}
                     placeholder="ค้นหาอีเมลหรือรหัสผู้ใช้"
-                    className="h-8 w-72 rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+                    className="h-8 pl-7"
                   />
                 </div>
-                {PRESETS.map((item) => (
-                  <FilterChip
-                    key={item.id}
-                    active={preset === item.id}
-                    onClick={() => {
-                      setPreset(item.id);
-                      setPage(1);
-                    }}
-                  >
-                    {item.label}
-                  </FilterChip>
-                ))}
+                <div className="flex flex-wrap items-center gap-2">
+                  {PRESETS.map((item) => (
+                    <FilterChip
+                      key={item.id}
+                      active={preset === item.id}
+                      onClick={() => {
+                        setPreset(item.id);
+                        setPage(1);
+                      }}
+                    >
+                      {item.label}
+                    </FilterChip>
+                  ))}
+                </div>
               </>
             }
             right={
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <label className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   เรียงตาม
                   <div className="relative">
@@ -438,14 +437,14 @@ function SubscriptionsPage() {
                   </div>
                 </label>
                 {selected.length > 0 ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => bulkRevokeMutation.mutate(selected)}
                     disabled={bulkRevokeMutation.isPending}
-                    className="inline-flex h-8 items-center rounded-md border border-destructive/40 bg-destructive/10 px-3 text-[12px] font-medium text-destructive hover:bg-destructive/15 disabled:opacity-50"
                   >
                     {bulkRevokeMutation.isPending ? "กำลังยกเลิก..." : `ยกเลิก ${selected.length} รายการ`}
-                  </button>
+                  </Button>
                 ) : (
                   <span className="text-[12px] text-muted-foreground tabular-nums">
                     {total} รายการ
@@ -508,13 +507,9 @@ function SubscriptionsPage() {
                       <TD className="text-muted-foreground">{formatDateOnly(row.expiresAt)}</TD>
                       <TD>{statusBadge(row)}</TD>
                       <TD className="text-right">
-                        <button
-                          type="button"
-                          onClick={() => revokeMutation.mutate(row.userId)}
-                          className="inline-flex h-7 items-center rounded-md border border-border bg-card px-2 text-[11px] text-foreground hover:bg-muted"
-                        >
+                        <Button size="sm" onClick={() => revokeMutation.mutate(row.userId)}>
                           ยกเลิกสิทธิ์
-                        </button>
+                        </Button>
                       </TD>
                     </TR>
                   );
@@ -523,38 +518,33 @@ function SubscriptionsPage() {
             </DataTable>
           )}
 
+          {!subscriptionsQuery.isLoading && rows.length > 0 ? (
+            <RecordList>
+              {rows.map((row) => (
+                <RecordCard key={row.userId}>
+                  <RecordField>
+                    <span className="min-w-0 truncate font-medium text-foreground">{row.email}</span>
+                    {statusBadge(row)}
+                  </RecordField>
+                  <RecordField label="รหัสผู้ใช้">
+                    <span className="font-mono text-[12px]">{row.userId}</span>
+                  </RecordField>
+                  <RecordField label="ประเภทสิทธิ์">{tierLabel(row)}</RecordField>
+                  <RecordField label="ที่มา">{row.source}</RecordField>
+                  <RecordField label="หมดอายุ">{formatDateOnly(row.expiresAt)}</RecordField>
+                  <div className="border-t border-border/70 pt-2">
+                    <Button size="sm" onClick={() => revokeMutation.mutate(row.userId)}>
+                      ยกเลิกสิทธิ์
+                    </Button>
+                  </div>
+                </RecordCard>
+              ))}
+            </RecordList>
+          ) : null}
+
           <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
         </PanelBody>
       </Panel>
     </div>
-  );
-}
-
-function QuickActionButton({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
-    >
-      {label}
-    </button>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <div className="mt-1.5">{children}</div>
-    </label>
   );
 }

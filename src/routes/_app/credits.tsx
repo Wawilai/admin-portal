@@ -3,15 +3,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  Button,
   DataTable,
+  Field,
   HelperNote,
   InlineAlert,
+  Input,
   LoadingSkeleton,
   PageHeader,
   Panel,
   PanelBody,
   PanelHeader,
   PreviewRow,
+  RecordCard,
+  RecordField,
+  RecordList,
   StatTile,
   TBody,
   TD,
@@ -141,21 +147,19 @@ function CreditsPage() {
                   This value controls the baseline quota before any top-ups or bonus balances are applied.
                 </HelperNote>
                 <Field label="Free daily base">
-                  <input
+                  <Input
                     type="number"
                     value={freeDailyBase}
                     onChange={(event) => setFreeDailyBase(event.target.value)}
-                    className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
                   />
                 </Field>
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   onClick={() => policyUpdate.mutate(Number(freeDailyBase))}
                   disabled={policyUpdate.isPending}
-                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {policyUpdate.isPending ? "Saving..." : "Save policy"}
-                </button>
+                </Button>
               </PanelBody>
             </Panel>
 
@@ -173,34 +177,32 @@ function CreditsPage() {
                 </HelperNote>
 
                 <div className="flex flex-wrap gap-2">
-                  <QuickActionButton label="+10" onClick={() => setDelta("10")} />
-                  <QuickActionButton label="+50" onClick={() => setDelta("50")} />
-                  <QuickActionButton label="+100" onClick={() => setDelta("100")} />
-                  <QuickActionButton label="-10" onClick={() => setDelta("-10")} />
+                  <Button size="sm" onClick={() => setDelta("10")}>+10</Button>
+                  <Button size="sm" onClick={() => setDelta("50")}>+50</Button>
+                  <Button size="sm" onClick={() => setDelta("100")}>+100</Button>
+                  <Button size="sm" onClick={() => setDelta("-10")}>-10</Button>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="User ID">
-                    <input
+                    <Input
                       type="text"
                       value={userId}
                       onChange={(event) => setUserId(event.target.value)}
                       placeholder="uid_001"
-                      className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                   </Field>
                   <Field label="Delta">
-                    <input
+                    <Input
                       type="number"
                       value={delta}
                       onChange={(event) => setDelta(event.target.value)}
-                      className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
                     />
                   </Field>
                 </div>
 
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
                   onClick={() => adjustMutation.mutate()}
                   disabled={
                     adjustMutation.isPending ||
@@ -208,10 +210,9 @@ function CreditsPage() {
                     !Number.isFinite(deltaValue) ||
                     deltaValue === 0
                   }
-                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {adjustMutation.isPending ? "Applying..." : "Apply adjustment"}
-                </button>
+                </Button>
               </PanelBody>
             </Panel>
           </div>
@@ -248,39 +249,31 @@ function CreditsPage() {
                   ))}
                 </TBody>
               </DataTable>
+
+              <RecordList>
+                {(policy?.items ?? []).map((row) => (
+                  <RecordCard key={row.userId}>
+                    <RecordField>
+                      <span className="min-w-0 truncate font-mono text-[12px] font-medium text-foreground">
+                        {row.userId}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-foreground">{row.balance}</span>
+                    </RecordField>
+                    <RecordField label="Used today">
+                      <span className="tabular-nums">{row.usedToday}</span>
+                    </RecordField>
+                    <RecordField label="Remaining today">
+                      <span className="tabular-nums">{row.remainingToday}</span>
+                    </RecordField>
+                    <RecordField label="Updated">{formatDateTime(row.updatedAt)}</RecordField>
+                    <RecordField label="Locked">{row.locked ? "Yes" : "No"}</RecordField>
+                  </RecordCard>
+                ))}
+              </RecordList>
             </PanelBody>
           </Panel>
         </>
       )}
     </div>
-  );
-}
-
-function QuickActionButton({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
-    >
-      {label}
-    </button>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <div className="mt-1.5">{children}</div>
-    </label>
   );
 }

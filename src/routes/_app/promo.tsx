@@ -3,11 +3,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
+  Button,
   DataTable,
   EmptyState,
+  Field,
   FilterChip,
   HelperNote,
   InlineAlert,
+  Input,
   LoadingSkeleton,
   PageHeader,
   Pagination,
@@ -15,6 +18,9 @@ import {
   PanelBody,
   PanelHeader,
   PreviewRow,
+  RecordCard,
+  RecordField,
+  RecordList,
   StatusBadge,
   TBody,
   TD,
@@ -183,74 +189,76 @@ function PromoPage() {
           </HelperNote>
 
           <div className="flex flex-wrap gap-2">
-            <QuickActionButton
-              label="ทดลอง 10 วัน (1 คน)"
+            <Button
+              size="sm"
               onClick={() => {
                 setDiscountValue("10");
                 setMaxUses("1");
                 setExpiresInDays("30");
               }}
-            />
-            <QuickActionButton
-              label="แคมเปญ 30 วัน (100 คน)"
+            >
+              ทดลอง 10 วัน (1 คน)
+            </Button>
+            <Button
+              size="sm"
               onClick={() => {
                 setDiscountValue("30");
                 setMaxUses("100");
                 setExpiresInDays("14");
               }}
-            />
-            <QuickActionButton
-              label="Premium 7 วัน (ไม่จำกัดคน)"
+            >
+              แคมเปญ 30 วัน (100 คน)
+            </Button>
+            <Button
+              size="sm"
               onClick={() => {
                 setDiscountValue("7");
                 setMaxUses("0");
                 setExpiresInDays("0");
               }}
-            />
+            >
+              Premium 7 วัน (ไม่จำกัดคน)
+            </Button>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Field label="โค้ด">
-              <input
+              <Input
                 value={code}
                 onChange={(event) => setCode(event.target.value.toUpperCase())}
                 placeholder="เช่น RERK001"
-                className="h-9 w-full rounded-md border border-border bg-background px-3 font-mono text-sm text-foreground focus:border-primary focus:outline-none"
+                className="font-mono"
               />
             </Field>
             <Field label="คำอธิบาย (ภายใน)">
-              <input
+              <Input
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="บันทึกของแอดมิน เช่น ชื่อแคมเปญ"
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
             <Field label="จำนวนวัน Premium ฟรี">
-              <input
+              <Input
                 type="number"
                 min="1"
                 value={discountValue}
                 onChange={(event) => setDiscountValue(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
             <Field label="ใช้ได้กี่ครั้ง (0 = ไม่จำกัด)">
-              <input
+              <Input
                 type="number"
                 min="0"
                 value={maxUses}
                 onChange={(event) => setMaxUses(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
             <Field label="โค้ดหมดอายุใน (วัน, 0 = ไม่หมด)">
-              <input
+              <Input
                 type="number"
                 min="0"
                 value={expiresInDays}
                 onChange={(event) => setExpiresInDays(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
           </div>
@@ -262,14 +270,14 @@ function PromoPage() {
               <strong className="text-foreground"> โค้ดหมดอายุ</strong> ใส่ <code>0</code> เพื่อให้โค้ดใช้ได้จนกว่าจะปิดเอง
             </HelperNote>
             <div className="flex items-center xl:justify-end">
-              <button
-                type="button"
+              <Button
+                variant="primary"
                 onClick={() => createMutation.mutate()}
                 disabled={createMutation.isPending || !canCreate}
-                className="inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-4 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 xl:w-auto"
+                className="w-full xl:w-auto"
               >
                 {createMutation.isPending ? "กำลังสร้าง..." : "สร้างโค้ด"}
-              </button>
+              </Button>
             </div>
           </div>
         </PanelBody>
@@ -300,14 +308,14 @@ function PromoPage() {
             }
             right={
               selected.length > 0 ? (
-                <button
-                  type="button"
+                <Button
+                  variant="destructive"
+                  size="sm"
                   onClick={() => bulkDeactivateMutation.mutate(selected)}
                   disabled={bulkDeactivateMutation.isPending}
-                  className="inline-flex h-8 items-center rounded-md border border-destructive/40 bg-destructive/10 px-3 text-[12px] font-medium text-destructive hover:bg-destructive/15 disabled:opacity-50"
                 >
                   {bulkDeactivateMutation.isPending ? "กำลังปิด..." : `ปิด ${selected.length} โค้ด`}
-                </button>
+                </Button>
               ) : (
                 <span className="text-[12px] text-muted-foreground tabular-nums">
                   {total} โค้ด
@@ -375,14 +383,9 @@ function PromoPage() {
                       </TD>
                       <TD className="text-right">
                         {row.id ? (
-                          <button
-                            type="button"
-                            onClick={() => deactivateMutation.mutate(row.id!)}
-                            disabled={!row.active}
-                            className="inline-flex h-7 items-center rounded-md border border-border bg-card px-2 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
-                          >
+                          <Button size="sm" onClick={() => deactivateMutation.mutate(row.id!)} disabled={!row.active}>
                             ปิดใช้งาน
-                          </button>
+                          </Button>
                         ) : null}
                       </TD>
                     </TR>
@@ -392,38 +395,39 @@ function PromoPage() {
             </DataTable>
           )}
 
+          {!promoQuery.isLoading && rows.length > 0 ? (
+            <RecordList>
+              {rows.map((row) => (
+                <RecordCard key={row.code}>
+                  <RecordField>
+                    <span className="min-w-0 truncate font-mono font-medium text-foreground">{row.code}</span>
+                    {row.active ? (
+                      <StatusBadge variant="active">ใช้งานได้</StatusBadge>
+                    ) : (
+                      <StatusBadge variant="expired">ปิดใช้งาน</StatusBadge>
+                    )}
+                  </RecordField>
+                  <RecordField label="สิทธิ์ที่ได้">{row.rewardLabel}</RecordField>
+                  <RecordField label="ใช้ไปแล้ว">
+                    <span className="tabular-nums">{row.usedCount}</span>
+                  </RecordField>
+                  <RecordField label="จำกัดครั้ง">{row.maxUses ?? "ไม่จำกัด"}</RecordField>
+                  <RecordField label="หมดอายุ">{formatDateOnly(row.expiresAt)}</RecordField>
+                  {row.id ? (
+                    <div className="border-t border-border/70 pt-2">
+                      <Button size="sm" onClick={() => deactivateMutation.mutate(row.id!)} disabled={!row.active}>
+                        ปิดใช้งาน
+                      </Button>
+                    </div>
+                  ) : null}
+                </RecordCard>
+              ))}
+            </RecordList>
+          ) : null}
+
           <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
         </PanelBody>
       </Panel>
     </div>
-  );
-}
-
-function QuickActionButton({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex h-8 items-center rounded-md border border-border bg-card px-3 text-[12px] font-medium text-foreground hover:bg-muted"
-    >
-      {label}
-    </button>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <div className="mt-1.5">{children}</div>
-    </label>
   );
 }

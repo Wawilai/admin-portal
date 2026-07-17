@@ -1,20 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
-  PageHeader,
-  Panel,
-  PanelHeader,
-  PanelBody,
-  StatusBadge,
   DataTable,
-  THead,
-  TH,
-  TBody,
-  TR,
-  TD,
+  DetailField,
   EmptyState,
   InlineAlert,
   LoadingSkeleton,
+  PageHeader,
+  Panel,
+  PanelBody,
+  PanelHeader,
+  StatusBadge,
+  TBody,
+  TD,
+  TH,
+  THead,
+  TR,
 } from "@/components/ui-portal";
 import { ArrowLeft } from "lucide-react";
 import { apiGet } from "@/lib/api";
@@ -86,17 +87,17 @@ function UserDetailPage() {
               <Panel>
                 <PanelHeader title={user.email} description={user.userId} actions={tierBadge(user.tier)} />
                 <PanelBody className="grid gap-4 md:grid-cols-2">
-                  <Field label="Locale" value={user.locale} />
-                  <Field label="Credits" value={String(user.credits)} />
-                  <Field label="Remaining today" value={String(user.remainingToday)} />
-                  <Field label="Push" value={user.pushEnabled ? "Enabled" : "Disabled"} />
-                  <Field label="Zodiac" value={user.zodiac} />
-                  <Field label="Element" value={user.element} />
-                  <Field
+                  <DetailField label="Locale" value={user.locale} />
+                  <DetailField label="Credits" value={String(user.credits)} />
+                  <DetailField label="Remaining today" value={String(user.remainingToday)} />
+                  <DetailField label="Push" value={user.pushEnabled ? "Enabled" : "Disabled"} />
+                  <DetailField label="Zodiac" value={user.zodiac} />
+                  <DetailField label="Element" value={user.element} />
+                  <DetailField
                     label="Subscription expires"
                     value={formatDateOnly(user.subscriptionExpiresAt)}
                   />
-                  <Field label="Last active" value={timeAgo(user.lastActiveAt)} />
+                  <DetailField label="Last active" value={timeAgo(user.lastActiveAt)} />
                 </PanelBody>
               </Panel>
 
@@ -186,15 +187,6 @@ function UserDetailPage() {
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-sm text-foreground">{value || "—"}</div>
     </div>
   );
 }

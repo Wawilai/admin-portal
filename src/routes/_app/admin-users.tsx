@@ -2,20 +2,29 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  PageHeader,
-  Panel,
-  PanelHeader,
-  PanelBody,
+  Button,
+  ConfirmDialog,
   DataTable,
-  THead,
-  TH,
-  TBody,
-  TR,
-  TD,
-  Pagination,
   EmptyState,
+  Field,
   InlineAlert,
+  Input,
   LoadingSkeleton,
+  PageHeader,
+  Pagination,
+  Panel,
+  PanelBody,
+  PanelHeader,
+  PromptDialog,
+  RecordCard,
+  RecordField,
+  RecordList,
+  Select,
+  TBody,
+  TD,
+  TH,
+  THead,
+  TR,
 } from "@/components/ui-portal";
 import { apiGet, apiWrite, buildApiPath, extractErrorDetail } from "@/lib/api";
 import { formatDateTime } from "@/lib/formatters";
@@ -42,6 +51,8 @@ function AdminUsersPage() {
   const [role, setRole] = useState<AdminRole>("analyst");
   const [flash, setFlash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<AdminUserRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
   const pageSize = 10;
 
   const usersQuery = useQuery({
@@ -79,6 +90,7 @@ function AdminUsersPage() {
     onSuccess: () => {
       setFlash("Password changed.");
       setError(null);
+      setPasswordTarget(null);
     },
     onError: (mutationError) => {
       setError(extractErrorDetail(mutationError, "Unable to change password."));
@@ -92,6 +104,7 @@ function AdminUsersPage() {
     onSuccess: async () => {
       setFlash("Admin user deleted.");
       setError(null);
+      setDeleteTarget(null);
       await queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (mutationError) => {
@@ -115,40 +128,30 @@ function AdminUsersPage() {
           <PanelHeader title="Create admin user" description="Role and password are stored in the backend." />
           <PanelBody className="flex flex-col gap-4">
             <Field label="Username">
-              <input
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
-              />
+              <Input value={username} onChange={(event) => setUsername(event.target.value)} />
             </Field>
             <Field label="Password">
-              <input
+              <Input
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </Field>
             <Field label="Role">
-              <select
-                value={role}
-                onChange={(event) => setRole(event.target.value as AdminRole)}
-                className="h-9 w-full rounded-md border border-border bg-background px-2.5 text-sm text-foreground focus:border-primary focus:outline-none"
-              >
+              <Select value={role} onChange={(event) => setRole(event.target.value as AdminRole)}>
                 <option value="super_admin">super_admin</option>
                 <option value="ops_admin">ops_admin</option>
                 <option value="marketing_admin">marketing_admin</option>
                 <option value="analyst">analyst</option>
-              </select>
+              </Select>
             </Field>
-            <button
-              type="button"
+            <Button
+              variant="primary"
               onClick={() => createMutation.mutate()}
               disabled={createMutation.isPending}
-              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {createMutation.isPending ? "Creating…" : "Create admin user"}
-            </button>
+            </Button>
           </PanelBody>
         </Panel>
 
@@ -183,29 +186,12 @@ function AdminUsersPage() {
                       <TD className="text-muted-foreground">{formatDateTime(row.createdAt)}</TD>
                       <TD className="text-right">
                         <div className="inline-flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newPassword = window.prompt(`New password for ${row.username}`);
-                              if (newPassword) {
-                                passwordMutation.mutate({ userId: row.id, newPassword });
-                              }
-                            }}
-                            className="inline-flex h-7 items-center rounded-md border border-border bg-card px-2 text-[11px] text-foreground hover:bg-muted"
-                          >
+                          <Button size="sm" onClick={() => setPasswordTarget(row)}>
                             Password
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (window.confirm(`Delete admin user ${row.username}?`)) {
-                                deleteMutation.mutate(row.id);
-                              }
-                            }}
-                            className="inline-flex h-7 items-center rounded-md border border-destructive/40 bg-destructive/10 px-2 text-[11px] text-destructive hover:bg-destructive/15"
-                          >
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(row)}>
                             Delete
-                          </button>
+                          </Button>
                         </div>
                       </TD>
                     </TR>
@@ -213,22 +199,64 @@ function AdminUsersPage() {
                 </TBody>
               </DataTable>
             )}
+
+            {!usersQuery.isLoading && rows.length > 0 ? (
+              <RecordList>
+                {rows.map((row) => (
+                  <RecordCard key={row.id}>
+                    <RecordField>
+                      <span className="min-w-0 truncate font-medium text-foreground">{row.username}</span>
+                      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{row.role}</span>
+                    </RecordField>
+                    <RecordField label="Created">{formatDateTime(row.createdAt)}</RecordField>
+                    <div className="flex gap-2 border-t border-border/70 pt-2">
+                      <Button size="sm" onClick={() => setPasswordTarget(row)}>
+                        Password
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(row)}>
+                        Delete
+                      </Button>
+                    </div>
+                  </RecordCard>
+                ))}
+              </RecordList>
+            ) : null}
           </PanelBody>
 
           <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
         </Panel>
       </div>
-    </div>
-  );
-}
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-      <div className="mt-1.5">{children}</div>
-    </label>
+      <PromptDialog
+        open={passwordTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setPasswordTarget(null);
+        }}
+        title={`New password for ${passwordTarget?.username ?? ""}`}
+        label="New password"
+        inputType="password"
+        confirmLabel="Change password"
+        isPending={passwordMutation.isPending}
+        onConfirm={(newPassword) => {
+          if (passwordTarget) {
+            passwordMutation.mutate({ userId: passwordTarget.id, newPassword });
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title={`Delete admin user ${deleteTarget?.username ?? ""}?`}
+        description="This cannot be undone. The operator will lose access immediately."
+        confirmLabel="Delete"
+        isPending={deleteMutation.isPending}
+        onConfirm={() => {
+          if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+        }}
+      />
+    </div>
   );
 }

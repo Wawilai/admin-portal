@@ -7,12 +7,17 @@ import {
   DataTable,
   EmptyState,
   FilterChip,
+  Input,
   InlineAlert,
   LoadingSkeleton,
   PageHeader,
   Pagination,
   Panel,
+  RecordCard,
+  RecordField,
+  RecordList,
   StatTile,
+  StatusBadge,
   TBody,
   TD,
   TH,
@@ -109,30 +114,32 @@ function AiUsagePage() {
         <Toolbar
           left={
             <>
-              <div className="relative">
+              <div className="relative w-full sm:w-72">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                <input
+                <Input
                   value={search}
                   onChange={(event) => {
                     setSearch(event.target.value);
                     setPage(1);
                   }}
                   placeholder="Search feature, user ID, or model"
-                  className="h-8 w-72 rounded-md border border-border bg-background pl-7 pr-2.5 text-[13px] text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none"
+                  className="h-8 pl-7"
                 />
               </div>
-              {STATUS_FILTERS.map((item) => (
-                <FilterChip
-                  key={item.id}
-                  active={status === item.id}
-                  onClick={() => {
-                    setStatus(item.id);
-                    setPage(1);
-                  }}
-                >
-                  {item.label}
-                </FilterChip>
-              ))}
+              <div className="flex flex-wrap items-center gap-2">
+                {STATUS_FILTERS.map((item) => (
+                  <FilterChip
+                    key={item.id}
+                    active={status === item.id}
+                    onClick={() => {
+                      setStatus(item.id);
+                      setPage(1);
+                    }}
+                  >
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
             </>
           }
           right={
@@ -177,15 +184,11 @@ function AiUsagePage() {
                   </TD>
                   <TD className="font-mono text-[12px] text-muted-foreground">{row.userId}</TD>
                   <TD>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                        row.success
-                          ? "bg-success/15 text-success"
-                          : "bg-destructive/15 text-destructive"
-                      }`}
-                    >
-                      {row.success ? "Success" : "Failed"}
-                    </span>
+                    {row.success ? (
+                      <StatusBadge variant="success">Success</StatusBadge>
+                    ) : (
+                      <StatusBadge variant="danger">Failed</StatusBadge>
+                    )}
                   </TD>
                   <TD className="tabular-nums">{row.responseMs} ms</TD>
                   <TD className="text-muted-foreground">{row.model}</TD>
@@ -194,6 +197,34 @@ function AiUsagePage() {
             </TBody>
           </DataTable>
         )}
+
+        {!usageQuery.isLoading && rows.length > 0 ? (
+          <RecordList>
+            {rows.map((row) => (
+              <RecordCard key={row.id}>
+                <RecordField>
+                  <span className="inline-flex min-w-0 items-center gap-2 truncate font-medium text-foreground">
+                    <Activity className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    {row.feature}
+                  </span>
+                  {row.success ? (
+                    <StatusBadge variant="success">Success</StatusBadge>
+                  ) : (
+                    <StatusBadge variant="danger">Failed</StatusBadge>
+                  )}
+                </RecordField>
+                <RecordField label="When">{formatDateTime(row.createdAt)}</RecordField>
+                <RecordField label="User">
+                  <span className="font-mono text-[12px]">{row.userId}</span>
+                </RecordField>
+                <RecordField label="Latency">
+                  <span className="tabular-nums">{row.responseMs} ms</span>
+                </RecordField>
+                <RecordField label="Model">{row.model}</RecordField>
+              </RecordCard>
+            ))}
+          </RecordList>
+        ) : null}
 
         <Pagination
           page={page}

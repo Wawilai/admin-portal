@@ -17,6 +17,9 @@ import {
   EmptyState,
   InlineAlert,
   LoadingSkeleton,
+  RecordList,
+  RecordCard,
+  RecordField,
 } from "@/components/ui-portal";
 import { Search, ChevronDown, Users as UsersIcon } from "lucide-react";
 import { apiGet, buildApiPath } from "@/lib/api";
@@ -110,7 +113,7 @@ function UsersPage() {
         <Toolbar
           left={
             <>
-              <div className="relative">
+              <div className="relative w-full sm:w-72">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="search"
@@ -120,21 +123,23 @@ function UsersPage() {
                     setPage(1);
                   }}
                   placeholder="Search by email or user id…"
-                  className="h-8 w-72 rounded-md border border-input bg-background pl-7 pr-3 text-[13px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:ring-2 focus:ring-ring/40"
+                  className="h-8 w-full rounded-md border border-input bg-background pl-7 pr-3 text-[13px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-ring focus:ring-2 focus:ring-ring/40"
                 />
               </div>
-              {PRESETS.map((item) => (
-                <FilterChip
-                  key={item.id}
-                  active={preset === item.id}
-                  onClick={() => {
-                    setPreset(item.id);
-                    setPage(1);
-                  }}
-                >
-                  {item.label}
-                </FilterChip>
-              ))}
+              <div className="flex flex-wrap items-center gap-2">
+                {PRESETS.map((item) => (
+                  <FilterChip
+                    key={item.id}
+                    active={preset === item.id}
+                    onClick={() => {
+                      setPreset(item.id);
+                      setPage(1);
+                    }}
+                  >
+                    {item.label}
+                  </FilterChip>
+                ))}
+              </div>
             </>
           }
           right={
@@ -223,6 +228,37 @@ function UsersPage() {
             </TBody>
           </DataTable>
         )}
+
+        {!usersQuery.isLoading && rows.length > 0 ? (
+          <RecordList>
+            {rows.map((user) => (
+              <RecordCard
+                key={user.userId}
+                onClick={() =>
+                  navigate({
+                    to: "/users/$userId",
+                    params: { userId: user.userId },
+                  })
+                }
+              >
+                <RecordField>
+                  <span className="min-w-0 truncate font-medium text-foreground">{user.email}</span>
+                  {tierBadge(user.tier)}
+                </RecordField>
+                <RecordField label="User ID">
+                  <span className="font-mono text-[11px]">{user.userId}</span>
+                </RecordField>
+                <RecordField label="Credits">
+                  <span className="tabular-nums">{user.credits}</span>
+                </RecordField>
+                <RecordField label="Remaining today">
+                  <span className="tabular-nums">{user.remainingToday}</span>
+                </RecordField>
+                <RecordField label="Last active">{timeAgo(user.lastActiveAt)}</RecordField>
+              </RecordCard>
+            ))}
+          </RecordList>
+        ) : null}
 
         <Pagination page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
       </Panel>

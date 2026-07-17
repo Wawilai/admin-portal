@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  Button,
+  DataTable,
   HelperNote,
   InlineAlert,
   LoadingSkeleton,
@@ -10,8 +12,15 @@ import {
   Panel,
   PanelBody,
   PanelHeader,
+  RecordCard,
+  RecordList,
   StatTile,
   StatusBadge,
+  TBody,
+  TD,
+  TH,
+  THead,
+  TR,
 } from "@/components/ui-portal";
 import { apiGet, apiWrite, extractErrorDetail } from "@/lib/api";
 import type { RemoteConfig } from "@/lib/types";
@@ -174,92 +183,113 @@ function FeatureAccessPage() {
               title="Feature rules"
               description="Each row controls access for one app capability. Trial access always implies premium access."
             />
-            <PanelBody className="flex flex-col gap-4">
-              <div className="overflow-x-auto rounded-md border border-border">
-                <table className="min-w-full divide-y divide-border text-sm">
-                  <thead className="bg-muted/40">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium text-foreground">
-                        Feature
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-foreground">
-                        Free
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-foreground">
-                        Trial
-                      </th>
-                      <th className="px-4 py-3 text-left font-medium text-foreground">
-                        Premium
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {FEATURE_ROWS.map((feature) => (
-                      <tr key={feature.key} className="bg-card/50">
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <div className="font-medium text-foreground">{feature.label}</div>
-                            <FeatureRuleBadge access={features[feature.key] ?? []} />
-                          </div>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {feature.description}
-                          </div>
-                          <div className="mt-1 font-mono text-[11px] text-muted-foreground">
-                            {feature.key}
-                          </div>
-                        </td>
-                        {(["free", "trial", "premium"] as AccessTier[]).map((tier) => (
-                          <td key={tier} className="px-4 py-3">
-                            <label className="inline-flex items-center gap-2 text-sm text-foreground">
-                              <input
-                                type="checkbox"
-                                checked={features[feature.key]?.includes(tier) ?? false}
-                                onChange={() => {
-                                  setFeatures((current) => ({
-                                    ...current,
-                                    [feature.key]: toggleTier(current[feature.key] ?? [], tier),
-                                  }));
-                                }}
-                              />
-                              <span className="capitalize">{tier}</span>
-                            </label>
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <PanelBody className="flex flex-col gap-4 px-0 py-0 pt-4">
+              <DataTable>
+                <THead>
+                  <TR>
+                    <TH>Feature</TH>
+                    <TH>Free</TH>
+                    <TH>Trial</TH>
+                    <TH>Premium</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {FEATURE_ROWS.map((feature) => (
+                    <TR key={feature.key}>
+                      <TD>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="font-medium text-foreground">{feature.label}</div>
+                          <FeatureRuleBadge access={features[feature.key] ?? []} />
+                        </div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {feature.description}
+                        </div>
+                        <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+                          {feature.key}
+                        </div>
+                      </TD>
+                      {(["free", "trial", "premium"] as AccessTier[]).map((tier) => (
+                        <TD key={tier}>
+                          <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                            <input
+                              type="checkbox"
+                              checked={features[feature.key]?.includes(tier) ?? false}
+                              onChange={() => {
+                                setFeatures((current) => ({
+                                  ...current,
+                                  [feature.key]: toggleTier(current[feature.key] ?? [], tier),
+                                }));
+                              }}
+                            />
+                            <span className="capitalize">{tier}</span>
+                          </label>
+                        </TD>
+                      ))}
+                    </TR>
+                  ))}
+                </TBody>
+              </DataTable>
 
-              <HelperNote>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p>
-                    Use this page when product or support teams need to open, restrict, or trial a feature without changing app code.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFeatures(loadedFeatures);
-                        setFlash(null);
-                        setError(null);
-                      }}
-                      disabled={!isDirty || saveMutation.isPending}
-                      className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-[13px] font-medium text-foreground hover:bg-muted disabled:opacity-50"
-                    >
-                      Reset changes
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => saveMutation.mutate()}
-                      disabled={saveMutation.isPending || !isDirty}
-                      className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                    >
-                      {saveMutation.isPending ? "Saving..." : "Save feature access"}
-                    </button>
+              <RecordList>
+                {FEATURE_ROWS.map((feature) => (
+                  <RecordCard key={feature.key}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-foreground">{feature.label}</span>
+                      <FeatureRuleBadge access={features[feature.key] ?? []} />
+                    </div>
+                    <p className="text-[12px] text-muted-foreground">{feature.description}</p>
+                    <div className="flex flex-wrap gap-3 border-t border-border/70 pt-2">
+                      {(["free", "trial", "premium"] as AccessTier[]).map((tier) => (
+                        <label
+                          key={tier}
+                          className="inline-flex items-center gap-1.5 text-[13px] text-foreground"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={features[feature.key]?.includes(tier) ?? false}
+                            onChange={() => {
+                              setFeatures((current) => ({
+                                ...current,
+                                [feature.key]: toggleTier(current[feature.key] ?? [], tier),
+                              }));
+                            }}
+                          />
+                          <span className="capitalize">{tier}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </RecordCard>
+                ))}
+              </RecordList>
+
+              <div className="px-4 pb-4 md:px-5">
+                <HelperNote>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p>
+                      Use this page when product or support teams need to open, restrict, or trial a feature without changing app code.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        onClick={() => {
+                          setFeatures(loadedFeatures);
+                          setFlash(null);
+                          setError(null);
+                        }}
+                        disabled={!isDirty || saveMutation.isPending}
+                      >
+                        Reset changes
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={() => saveMutation.mutate()}
+                        disabled={saveMutation.isPending || !isDirty}
+                      >
+                        {saveMutation.isPending ? "Saving..." : "Save feature access"}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </HelperNote>
+                </HelperNote>
+              </div>
             </PanelBody>
           </Panel>
         </div>
