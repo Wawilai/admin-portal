@@ -117,11 +117,11 @@ function AppShell() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background text-foreground">
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
-        <main className="flex-1 overflow-x-hidden">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto">
           <div className="mx-auto w-full max-w-[1400px] px-4 py-4 sm:px-6 sm:py-6">
             <Outlet />
           </div>
