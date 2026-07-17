@@ -38,6 +38,7 @@ export const Route = createFileRoute("/_app/audit-log")({
 const PRESETS = [
   { id: "all", label: "All" },
   { id: "auth", label: "Auth" },
+  { id: "billing", label: "Billing" },
   { id: "credits", label: "Credits" },
   { id: "subscriptions", label: "Subscriptions" },
   { id: "promo", label: "Promo" },
@@ -48,6 +49,57 @@ const PRESETS = [
 type Preset = (typeof PRESETS)[number]["id"];
 type SortKey = "created_at" | "actor" | "action";
 type SortDir = "asc" | "desc";
+
+function parseMetadata(metadataJson?: string): Record<string, unknown> | null {
+  if (!metadataJson?.trim()) return null;
+  try {
+    const parsed = JSON.parse(metadataJson) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function formatList(value: unknown) {
+  if (!Array.isArray(value)) return "";
+  const items = value.map((item) => String(item)).filter(Boolean);
+  return items.length > 0 ? items.join(", ") : "none";
+}
+
+function AuditDetails({ row }: { row: AuditRow }) {
+  const metadata = parseMetadata(row.metadataJson);
+  if (!metadata) {
+    return <span className="text-muted-foreground">No details</span>;
+  }
+
+  if (row.action.startsWith("billing.")) {
+    const returnedIds = formatList(metadata.returnedIds);
+    const notFoundIds = formatList(metadata.notFoundIds);
+    const missingCreditIds = formatList(metadata.missingCreditIds);
+    const storeAvailable = metadata.storeAvailable === true ? "available" : "unavailable";
+    const errorMessage = String(metadata.errorMessage ?? "");
+
+    return (
+      <div className="flex max-w-[460px] flex-col gap-0.5 font-mono text-[12px] leading-5 text-muted-foreground">
+        <span>Returned: {returnedIds}</span>
+        <span>Not found: {notFoundIds}</span>
+        <span>Missing credits: {missingCreditIds}</span>
+        <span>Store: {storeAvailable}</span>
+        {errorMessage ? <span>Error: {errorMessage}</span> : null}
+      </div>
+    );
+  }
+
+  const raw = row.metadataJson ?? "";
+  return (
+    <span className="block max-w-[460px] truncate font-mono text-[12px] text-muted-foreground">
+      {raw.length > 180 ? `${raw.slice(0, 180)}...` : raw}
+    </span>
+  );
+}
 
 function AuditLogPage() {
   const [search, setSearch] = useState("");
@@ -139,6 +191,7 @@ function AuditLogPage() {
                 <TH>Role</TH>
                 <TH>Action</TH>
                 <TH>Target</TH>
+                <TH>Details</TH>
               </TR>
             </THead>
             <TBody>
@@ -149,6 +202,9 @@ function AuditLogPage() {
                   <TD>{row.role}</TD>
                   <TD>{row.action}</TD>
                   <TD className="font-mono text-[12px] text-muted-foreground">{row.target}</TD>
+                  <TD>
+                    <AuditDetails row={row} />
+                  </TD>
                 </TR>
               ))}
             </TBody>

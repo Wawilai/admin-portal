@@ -140,9 +140,10 @@ export interface RemoteConfig {
 export interface AuditRow {
   id: string;
   actor: string;
-  role: AdminRole;
+  role: string;
   action: string;
   target: string;
+  metadataJson?: string;
   createdAt: string;
 }
 
