@@ -31,6 +31,7 @@ const permissionRouteOrder = [
   { permission: "users.read", route: "/users" },
   { permission: "credits.read", route: "/credits" },
   { permission: "subscriptions.read", route: "/subscriptions" },
+  { permission: "purchases.read", route: "/purchases" },
   { permission: "promo.read", route: "/promo" },
   { permission: "ai.read", route: "/ai-ops" },
   { permission: "ai.read", route: "/ai-usage" },

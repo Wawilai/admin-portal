@@ -147,6 +147,19 @@ export interface AuditRow {
   createdAt: string;
 }
 
+export interface PurchaseVerificationAttemptRow {
+  id: string;
+  kind: "credit" | "subscription";
+  userId: string;
+  productId: string;
+  platform: string;
+  purchaseToken: string;
+  verified: boolean;
+  granted: boolean;
+  failureReason: string;
+  createdAt: string;
+}
+
 export interface AdminUserRow {
   id: number;
   username: string;
