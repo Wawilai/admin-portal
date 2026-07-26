@@ -35,6 +35,11 @@ const FEATURE_ROWS = [
   { key: "companion.ai",  label: "AI Companion",          description: "แชทและคำแนะนำส่วนตัวจาก AI (ใช้ credit)" },
   { key: "zodiac_weekly", label: "ดวงนักษัตรรายสัปดาห์",  description: "ดูดวงนักษัตรประจำสัปดาห์ทั้ง 12 ราศี" },
   { key: "cosmic_card",   label: "ไพ่พยากรณ์",            description: "เปิดไพ่ 1 ใบ หรือ 3 ใบเพื่อดูแนวโน้ม" },
+  { key: "lagna_monthly",        label: "ลัคนาราศีรายเดือน",       description: "คะแนน 5 ด้านจากตำแหน่งดาวโคจรจริงรายเดือน" },
+  { key: "natal_chart",          label: "ผังดวงกำเนิด 12 เรือน",   description: "ผังวงล้อลัคนา เรือน และดาวเจ้าทศาปัจจุบัน" },
+  { key: "muhurta_wedding",      label: "ฤกษ์แต่งงาน",            description: "ฤกษ์ดีตามดวงสมพงษ์คู่บ่าวสาว" },
+  { key: "muhurta_vehicle",      label: "ฤกษ์ออกรถใหม่",          description: "เลี่ยงวันกาลกิณีของเจ้าของรถ" },
+  { key: "muhurta_housewarming", label: "ฤกษ์ขึ้นบ้านใหม่",        description: "เวลาเปิดประตูตามลัคนากำเนิด" },
 ] as const;
 
 type AccessTier = "free" | "trial" | "premium";
