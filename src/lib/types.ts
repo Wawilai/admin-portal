@@ -112,7 +112,9 @@ export interface AiConfig {
 export interface AiUsageRow {
   id: string;
   feature: string;
-  userId: string;
+  userId: string | null;
+  actorType: "user" | "system" | "server_client" | "deleted_user" | "legacy_unattributed";
+  actorLabel: string;
   success: boolean;
   responseMs: number;
   model: string;

@@ -50,6 +50,28 @@ const STATUS_FILTERS = [
 
 type StatusFilter = (typeof STATUS_FILTERS)[number]["id"];
 
+function AiActor({ row }: { row: AiUsageResponse["items"][number] }) {
+  const actorType =
+    row.actorType ||
+    (row.userId && row.userId !== "anonymous" ? "user" : "legacy_unattributed");
+  const actorLabel =
+    row.actorLabel ||
+    (actorType === "legacy_unattributed" ? "Legacy unattributed" : row.userId || "System");
+
+  if (actorType === "user" && row.userId) {
+    return <span className="font-mono text-[12px] text-muted-foreground">{row.userId}</span>;
+  }
+
+  const variant =
+    actorType === "system"
+      ? "info"
+      : actorType === "server_client" || actorType === "legacy_unattributed"
+        ? "warning"
+        : "neutral";
+
+  return <StatusBadge variant={variant}>{actorLabel}</StatusBadge>;
+}
+
 function AiUsagePage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -122,7 +144,7 @@ function AiUsagePage() {
                     setSearch(event.target.value);
                     setPage(1);
                   }}
-                  placeholder="Search feature, user ID, or model"
+                  placeholder="Search feature, actor, user ID, or model"
                   className="h-8 pl-7"
                 />
               </div>
@@ -166,7 +188,7 @@ function AiUsagePage() {
               <TR>
                 <TH>When</TH>
                 <TH>Feature</TH>
-                <TH>User</TH>
+                <TH>Actor</TH>
                 <TH>Status</TH>
                 <TH>Latency</TH>
                 <TH>Model</TH>
@@ -182,7 +204,9 @@ function AiUsagePage() {
                       {row.feature}
                     </span>
                   </TD>
-                  <TD className="font-mono text-[12px] text-muted-foreground">{row.userId}</TD>
+                  <TD>
+                    <AiActor row={row} />
+                  </TD>
                   <TD>
                     {row.success ? (
                       <StatusBadge variant="success">Success</StatusBadge>
@@ -214,8 +238,8 @@ function AiUsagePage() {
                   )}
                 </RecordField>
                 <RecordField label="When">{formatDateTime(row.createdAt)}</RecordField>
-                <RecordField label="User">
-                  <span className="font-mono text-[12px]">{row.userId}</span>
+                <RecordField label="Actor">
+                  <AiActor row={row} />
                 </RecordField>
                 <RecordField label="Latency">
                   <span className="tabular-nums">{row.responseMs} ms</span>

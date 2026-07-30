@@ -83,6 +83,29 @@ Example overview response:
 }
 ```
 
+### AI Usage
+
+- `GET /admin-api/ai/usage`
+
+Each usage row identifies the caller with `actorType` instead of treating every
+missing user ID as anonymous:
+
+```json
+{
+  "feature": "daily_horoscope",
+  "userId": "firebase_uid_or_null",
+  "actorType": "user",
+  "actorLabel": "firebase_uid_or_system_label",
+  "success": true,
+  "responseMs": 842,
+  "model": "gemini-2.5-flash",
+  "createdAt": "2026-07-30T01:46:46Z"
+}
+```
+
+Supported actor types are `user`, `system`, `server_client`, `deleted_user`,
+and `legacy_unattributed`.
+
 ### Users
 
 - `GET /admin-api/users`
