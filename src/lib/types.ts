@@ -132,11 +132,17 @@ export interface AiUsageResponse extends PaginatedResponse<AiUsageRow> {
   summary: AiUsageSummary;
 }
 
+export interface CreditPackConfig {
+  credits: number;
+  featured: boolean;
+}
+
 export interface RemoteConfig {
   storeUrlAndroid: string;
   storeUrlIos: string;
   storeUrlWeb: string;
   features: Record<string, { access: string[] }>;
+  creditPacks: Record<string, CreditPackConfig>;
 }
 
 export interface AuditRow {
