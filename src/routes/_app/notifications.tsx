@@ -1,16 +1,31 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, Clock3, DatabaseZap, ShieldAlert } from "lucide-react";
-import type { ComponentType } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
 import {
+  Button,
+  DataTable,
   EmptyState,
+  Field,
+  HelperNote,
   InlineAlert,
+  Input,
+  LoadingSkeleton,
   PageHeader,
   Panel,
   PanelBody,
   PanelHeader,
+  Select,
   StatusBadge,
+  TBody,
+  TD,
+  TH,
+  THead,
+  TR,
 } from "@/components/ui-portal";
+import { apiGet, apiWrite, extractErrorDetail } from "@/lib/api";
+import { formatDateTime } from "@/lib/formatters";
+import type { NotificationAudience, NotificationCampaign } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/notifications")({
   head: () => ({
@@ -18,116 +33,193 @@ export const Route = createFileRoute("/_app/notifications")({
       { title: "Notifications - Rerkdee Admin" },
       {
         name: "description",
-        content:
-          "Notification operations will be connected after the admin API notification module is ready.",
+        content: "Send test push notifications and review recent send history.",
       },
     ],
   }),
   component: NotificationsPage,
 });
 
+const AUDIENCE_LABELS: Record<string, string> = {
+  all_users: "ผู้ใช้ทั้งหมด",
+  free_tier: "กลุ่ม Free",
+  trial_tier: "กลุ่ม Trial",
+  premium_tier: "กลุ่ม Premium",
+};
+
 function NotificationsPage() {
+  const queryClient = useQueryClient();
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [audience, setAudience] = useState("all_users");
+  const [testToken, setTestToken] = useState("");
+  const [flash, setFlash] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const audiencesQuery = useQuery({
+    queryKey: ["notification-audiences"],
+    queryFn: () => apiGet<{ items: NotificationAudience[] }>("/notifications/audiences"),
+  });
+
+  const campaignsQuery = useQuery({
+    queryKey: ["notification-campaigns"],
+    queryFn: () => apiGet<{ items: NotificationCampaign[] }>("/notifications/campaigns"),
+  });
+
+  const testSendMutation = useMutation({
+    mutationFn: () =>
+      apiWrite<{ ok: boolean }>("/notifications/test-send", {
+        title: title.trim(),
+        body: body.trim(),
+        audience,
+        testToken: testToken.trim(),
+      }),
+    onSuccess: async () => {
+      setFlash("ส่งข้อความทดสอบสำเร็จ");
+      setError(null);
+      await queryClient.invalidateQueries({ queryKey: ["notification-campaigns"] });
+    },
+    onError: (mutationError) => {
+      setError(extractErrorDetail(mutationError, "ส่งข้อความทดสอบไม่สำเร็จ"));
+      setFlash(null);
+    },
+  });
+
+  const audiences = audiencesQuery.data?.items ?? [];
+  const campaigns = campaignsQuery.data?.items ?? [];
+  const canSend = title.trim().length > 0 && body.trim().length > 0 && testToken.trim().length > 0;
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
         title="Notifications"
-        subtitle="Push campaigns and delivery controls will be wired into the rebuilt admin API next."
-        actions={
-          <StatusBadge variant="neutral" dot={false}>
-            API pending
-          </StatusBadge>
-        }
+        subtitle="ส่งข้อความทดสอบไปยังอุปกรณ์เดียวก่อนตัดสินใจส่งจริง — หน้านี้ยังไม่รองรับการส่ง broadcast จริงไปยังทั้งกลุ่มเป้าหมาย"
       />
 
-      <InlineAlert variant="info" title="Module not connected yet">
-        This screen has been moved into the new portal shell, but notification
-        campaign endpoints are not available in the current backend contract.
-      </InlineAlert>
+      {flash ? <InlineAlert variant="success">{flash}</InlineAlert> : null}
+      {error ? <InlineAlert variant="danger">{error}</InlineAlert> : null}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(300px,0.8fr)]">
         <Panel>
           <PanelHeader
-            title="What is already ready"
-            description="The portal foundation is connected and secure. Notifications are the next backend module to wire."
+            title="ส่งข้อความทดสอบ"
+            description="ทดสอบเนื้อหาก่อนวางแผนแคมเปญจริง ใส่ FCM token ของอุปกรณ์ทดสอบเพื่อรับข้อความ"
           />
-          <PanelBody className="grid gap-3 md:grid-cols-2">
-            <InfoTile
-              icon={ShieldAlert}
-              title="Auth and permissions"
-              body="Cookie session, CSRF protection, permission-aware navigation, and session recovery are already live."
-            />
-            <InfoTile
-              icon={DatabaseZap}
-              title="Core admin modules"
-              body="Dashboard, users, credits, subscriptions, promo, AI config, remote config, audit log, and admin users already use the real admin API."
-            />
-            <InfoTile
-              icon={Bell}
-              title="Notifications shell"
-              body="The route, navigation entry, and operator-facing layout are ready to accept real notification data once endpoints exist."
-            />
-            <InfoTile
-              icon={Clock3}
-              title="Recommended next step"
-              body="Add read endpoints for campaigns, audience presets, test sends, and delivery metrics before restoring write actions."
-            />
+          <PanelBody className="flex flex-col gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label="หัวข้อ">
+                <Input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="เช่น ดวงประจำวันของคุณมาแล้ว"
+                />
+              </Field>
+              <Field label="กลุ่มเป้าหมาย (อ้างอิงสำหรับบันทึก)">
+                <Select value={audience} onChange={(event) => setAudience(event.target.value)}>
+                  {Object.entries(AUDIENCE_LABELS).map(([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <Field label="เนื้อหาข้อความ">
+              <Input
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                placeholder="ข้อความที่จะแสดงในการแจ้งเตือน"
+              />
+            </Field>
+            <Field
+              label="FCM token อุปกรณ์ทดสอบ"
+              hint="ใช้ token จากอุปกรณ์ของทีมเท่านั้น — ข้อความจะส่งไปยังอุปกรณ์นี้เพียงเครื่องเดียว"
+            >
+              <Input
+                value={testToken}
+                onChange={(event) => setTestToken(event.target.value)}
+                placeholder="วาง FCM token ที่นี่"
+                className="font-mono text-xs"
+              />
+            </Field>
+            <div className="flex items-center justify-end">
+              <Button
+                variant="primary"
+                onClick={() => testSendMutation.mutate()}
+                disabled={testSendMutation.isPending || !canSend}
+              >
+                {testSendMutation.isPending ? "กำลังส่ง..." : "ส่งข้อความทดสอบ"}
+              </Button>
+            </div>
           </PanelBody>
         </Panel>
 
         <Panel>
-          <PanelHeader
-            title="Suggested backend scope"
-            description="A lean contract is enough to unlock the first production-ready version."
-          />
-          <PanelBody>
-            <div className="space-y-3 text-sm text-muted-foreground">
-              <p><code>GET /admin-api/notifications/campaigns</code> for list and filters</p>
-              <p><code>GET /admin-api/notifications/audiences</code> for saved cohorts</p>
-              <p><code>POST /admin-api/notifications/test-send</code> for operator verification</p>
-              <p><code>GET /admin-api/notifications/metrics</code> for delivery and open-rate summary</p>
-            </div>
-            <div className="mt-5">
-              <Link
-                to="/audit-log"
-                className="inline-flex items-center rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                Review current audit coverage
-              </Link>
-            </div>
+          <PanelHeader title="ขนาดกลุ่มเป้าหมาย" description="จำนวนอุปกรณ์ที่ลงทะเบียนรับการแจ้งเตือนในแต่ละกลุ่ม" />
+          <PanelBody className="flex flex-col gap-3">
+            {audiencesQuery.isLoading ? (
+              <LoadingSkeleton className="h-32" />
+            ) : (
+              audiences.map((item) => (
+                <HelperNote key={item.audience}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground">
+                      {AUDIENCE_LABELS[item.audience] ?? item.audience}
+                    </span>
+                    <span className="tabular-nums font-medium text-foreground">
+                      {item.device_count.toLocaleString()} เครื่อง
+                    </span>
+                  </div>
+                </HelperNote>
+              ))
+            )}
           </PanelBody>
         </Panel>
       </div>
 
       <Panel>
-        <PanelBody>
-          <EmptyState
-            title="Notification operations are intentionally paused here"
-            description="The old mock campaign UI has been removed so operators do not mistake placeholder content for live delivery data."
-          />
+        <PanelHeader title="ประวัติการส่งทดสอบ" description="ข้อความทดสอบล่าสุดที่ส่งจากหน้านี้" />
+        <PanelBody className="px-0 py-0">
+          {campaignsQuery.isLoading ? (
+            <div className="p-5">
+              <LoadingSkeleton className="h-40" />
+            </div>
+          ) : campaigns.length === 0 ? (
+            <div className="px-5 py-10">
+              <EmptyState title="ยังไม่มีประวัติ" description="ยังไม่มีการส่งข้อความทดสอบ" />
+            </div>
+          ) : (
+            <DataTable>
+              <THead>
+                <TR>
+                  <TH>หัวข้อ</TH>
+                  <TH>เนื้อหา</TH>
+                  <TH>กลุ่มเป้าหมาย</TH>
+                  <TH>ส่งเมื่อ</TH>
+                  <TH>สถานะ</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {campaigns.map((campaign) => (
+                  <TR key={campaign.id}>
+                    <TD className="font-medium">{campaign.title}</TD>
+                    <TD className="max-w-xs truncate text-muted-foreground">{campaign.body}</TD>
+                    <TD>{AUDIENCE_LABELS[campaign.audience] ?? campaign.audience}</TD>
+                    <TD className="text-muted-foreground">{formatDateTime(campaign.created_at)}</TD>
+                    <TD>
+                      {campaign.success ? (
+                        <StatusBadge variant="success">สำเร็จ</StatusBadge>
+                      ) : (
+                        <StatusBadge variant="danger">ล้มเหลว</StatusBadge>
+                      )}
+                    </TD>
+                  </TR>
+                ))}
+              </TBody>
+            </DataTable>
+          )}
         </PanelBody>
       </Panel>
-    </div>
-  );
-}
-
-function InfoTile({
-  icon: Icon,
-  title,
-  body,
-}: {
-  icon: ComponentType<{ className?: string }>;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-card/65 p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-          <Icon className="h-4 w-4" />
-        </span>
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      </div>
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">{body}</p>
     </div>
   );
 }

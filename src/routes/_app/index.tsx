@@ -20,7 +20,7 @@ import {
   LoadingSkeleton,
 } from "@/components/ui-portal";
 import { apiGet } from "@/lib/api";
-import type { DashboardOverview } from "@/lib/types";
+import type { DashboardOverview, FcmInventory } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/")({
   head: () => ({
@@ -58,6 +58,12 @@ function DashboardPage() {
   });
 
   const overview = overviewQuery.data;
+
+  const fcmQuery = useQuery({
+    queryKey: ["dashboard-fcm-inventory"],
+    queryFn: () => apiGet<FcmInventory>("/dashboard/fcm-inventory"),
+  });
+  const fcm = fcmQuery.data;
 
   return (
     <div className="flex flex-col gap-6">
@@ -154,6 +160,49 @@ function DashboardPage() {
                   {healthBadge(overview?.pushStatus)}
                 </li>
               </ul>
+            </PanelBody>
+          </Panel>
+
+          <Panel>
+            <PanelHeader
+              title="FCM device inventory"
+              description={`อุปกรณ์ที่ลงทะเบียนรับการแจ้งเตือน — "ไม่อัปเดต" คือไม่ต่ออายุ token เกิน ${fcm?.stale_days ?? 30} วัน`}
+            />
+            <PanelBody className="px-0 py-0">
+              {fcmQuery.isLoading ? (
+                <div className="p-5">
+                  <LoadingSkeleton className="h-24" />
+                </div>
+              ) : !fcm || fcm.by_platform.length === 0 ? (
+                <div className="px-5 py-8 text-[13px] text-muted-foreground">
+                  ยังไม่มีอุปกรณ์ลงทะเบียน
+                </div>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {fcm.by_platform.map((row) => (
+                    <li
+                      key={row.platform}
+                      className="flex items-center justify-between gap-3 px-5 py-3"
+                    >
+                      <span className="text-[13px] font-medium capitalize text-foreground">
+                        {row.platform}
+                      </span>
+                      <span className="text-right text-[12px] tabular-nums text-muted-foreground">
+                        {row.total.toLocaleString()} เครื่อง
+                        {row.stale > 0 ? (
+                          <span className="ml-2 text-warning">({row.stale} ไม่อัปเดต)</span>
+                        ) : null}
+                      </span>
+                    </li>
+                  ))}
+                  <li className="flex items-center justify-between gap-3 px-5 py-3">
+                    <span className="text-[13px] font-semibold text-foreground">รวม</span>
+                    <span className="text-right text-[12px] font-medium tabular-nums text-foreground">
+                      {fcm.total_devices.toLocaleString()} เครื่อง
+                    </span>
+                  </li>
+                </ul>
+              )}
             </PanelBody>
           </Panel>
         </div>

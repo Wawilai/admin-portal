@@ -15,6 +15,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ReceiptText,
+  Users2,
 } from "lucide-react";
 import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import { useSession } from "@/features/auth/SessionContext";
@@ -50,6 +51,7 @@ export const NAV: NavItem[] = [
   { label: "Subscriptions", to: "/subscriptions", icon: CreditCard, permission: "subscriptions.read" },
   { label: "Purchases", to: "/purchases", icon: ReceiptText, permission: "purchases.read" },
   { label: "Promo", to: "/promo", icon: Ticket, permission: "promo.read" },
+  { label: "Referrals", to: "/referrals", icon: Users2, permission: "referrals.read" },
   { label: "AI Ops", to: "/ai-ops", icon: Sparkles, permission: "ai.read" },
   { label: "AI Usage", to: "/ai-usage", icon: Activity, permission: "ai.read" },
   { label: "Notifications", to: "/notifications", icon: Bell, permission: "notifications.read" },

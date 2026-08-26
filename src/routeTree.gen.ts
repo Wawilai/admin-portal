@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSubscriptionsRouteImport } from './routes/_app/subscriptions'
 import { Route as AppRemoteConfigRouteImport } from './routes/_app/remote-config'
+import { Route as AppReferralsRouteImport } from './routes/_app/referrals'
 import { Route as AppPurchasesRouteImport } from './routes/_app/purchases'
 import { Route as AppPromoRouteImport } from './routes/_app/promo'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
@@ -54,6 +55,11 @@ const AppSubscriptionsRoute = AppSubscriptionsRouteImport.update({
 const AppRemoteConfigRoute = AppRemoteConfigRouteImport.update({
   id: '/remote-config',
   path: '/remote-config',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReferralsRoute = AppReferralsRouteImport.update({
+  id: '/referrals',
+  path: '/referrals',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPurchasesRoute = AppPurchasesRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AppNotificationsRoute
   '/promo': typeof AppPromoRoute
   '/purchases': typeof AppPurchasesRoute
+  '/referrals': typeof AppReferralsRoute
   '/remote-config': typeof AppRemoteConfigRoute
   '/subscriptions': typeof AppSubscriptionsRoute
   '/users/$userId': typeof AppUsersUserIdRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AppNotificationsRoute
   '/promo': typeof AppPromoRoute
   '/purchases': typeof AppPurchasesRoute
+  '/referrals': typeof AppReferralsRoute
   '/remote-config': typeof AppRemoteConfigRoute
   '/subscriptions': typeof AppSubscriptionsRoute
   '/': typeof AppIndexRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/promo': typeof AppPromoRoute
   '/_app/purchases': typeof AppPurchasesRoute
+  '/_app/referrals': typeof AppReferralsRoute
   '/_app/remote-config': typeof AppRemoteConfigRoute
   '/_app/subscriptions': typeof AppSubscriptionsRoute
   '/_app/': typeof AppIndexRoute
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/promo'
     | '/purchases'
+    | '/referrals'
     | '/remote-config'
     | '/subscriptions'
     | '/users/$userId'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/promo'
     | '/purchases'
+    | '/referrals'
     | '/remote-config'
     | '/subscriptions'
     | '/'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/_app/notifications'
     | '/_app/promo'
     | '/_app/purchases'
+    | '/_app/referrals'
     | '/_app/remote-config'
     | '/_app/subscriptions'
     | '/_app/'
@@ -274,6 +286,13 @@ declare module '@tanstack/react-router' {
       path: '/remote-config'
       fullPath: '/remote-config'
       preLoaderRoute: typeof AppRemoteConfigRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/referrals': {
+      id: '/_app/referrals'
+      path: '/referrals'
+      fullPath: '/referrals'
+      preLoaderRoute: typeof AppReferralsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/purchases': {
@@ -366,6 +385,7 @@ interface AppRouteChildren {
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppPromoRoute: typeof AppPromoRoute
   AppPurchasesRoute: typeof AppPurchasesRoute
+  AppReferralsRoute: typeof AppReferralsRoute
   AppRemoteConfigRoute: typeof AppRemoteConfigRoute
   AppSubscriptionsRoute: typeof AppSubscriptionsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -383,6 +403,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotificationsRoute: AppNotificationsRoute,
   AppPromoRoute: AppPromoRoute,
   AppPurchasesRoute: AppPurchasesRoute,
+  AppReferralsRoute: AppReferralsRoute,
   AppRemoteConfigRoute: AppRemoteConfigRoute,
   AppSubscriptionsRoute: AppSubscriptionsRoute,
   AppIndexRoute: AppIndexRoute,

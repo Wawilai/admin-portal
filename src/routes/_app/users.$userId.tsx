@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import {
+  Button,
   DataTable,
   DetailField,
   EmptyState,
@@ -17,10 +19,10 @@ import {
   THead,
   TR,
 } from "@/components/ui-portal";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import { apiGet } from "@/lib/api";
-import { formatDateOnly, timeAgo } from "@/lib/formatters";
-import type { UserDetail } from "@/lib/types";
+import { formatDateTime, formatDateOnly, timeAgo } from "@/lib/formatters";
+import type { DreamHistoryEntry, UserDetail } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/users/$userId")({
   head: () => ({
@@ -54,6 +56,14 @@ function UserDetailPage() {
   });
 
   const user = detailQuery.data;
+
+  const [dreamHistoryRequested, setDreamHistoryRequested] = useState(false);
+  const dreamHistoryQuery = useQuery({
+    queryKey: ["user-dream-history", userId],
+    queryFn: () =>
+      apiGet<{ items: DreamHistoryEntry[] }>(`/users/${userId}/dream-history`),
+    enabled: dreamHistoryRequested,
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -131,6 +141,77 @@ function UserDetailPage() {
                         ))}
                       </TBody>
                     </DataTable>
+                  )}
+                </PanelBody>
+              </Panel>
+
+              <Panel>
+                <PanelHeader
+                  title="Dream history"
+                  description="Dream text is encrypted at rest. Viewing it here decrypts on demand and is recorded in the audit log."
+                  actions={
+                    !dreamHistoryRequested ? (
+                      <Button
+                        size="sm"
+                        onClick={() => setDreamHistoryRequested(true)}
+                      >
+                        <Eye className="mr-1.5 h-3.5 w-3.5" />
+                        View dream history
+                      </Button>
+                    ) : undefined
+                  }
+                />
+                <PanelBody className="px-0 py-0">
+                  {!dreamHistoryRequested ? (
+                    <div className="px-5 py-8">
+                      <EmptyState
+                        title="Hidden until requested"
+                        description="Click 'View dream history' to decrypt and load this user's past dream readings. This action is logged."
+                      />
+                    </div>
+                  ) : dreamHistoryQuery.isLoading ? (
+                    <div className="p-5">
+                      <LoadingSkeleton className="h-32" />
+                    </div>
+                  ) : dreamHistoryQuery.isError ? (
+                    <div className="px-5 py-8">
+                      <InlineAlert variant="danger" title="Unable to load dream history">
+                        The admin API could not decrypt or fetch these records.
+                      </InlineAlert>
+                    </div>
+                  ) : (dreamHistoryQuery.data?.items.length ?? 0) === 0 ? (
+                    <div className="px-5 py-8">
+                      <EmptyState
+                        title="No dream history"
+                        description="This user has no saved dream interpretations."
+                      />
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {dreamHistoryQuery.data!.items.map((entry) => (
+                        <li key={entry.id} className="px-5 py-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-[12px] text-muted-foreground">
+                              {formatDateTime(entry.created_at)}
+                            </span>
+                            <StatusBadge variant="neutral" dot={false}>
+                              {entry.locale}
+                            </StatusBadge>
+                          </div>
+                          <p className="mt-1.5 text-[13px] font-medium text-foreground">
+                            {entry.dream_text}
+                          </p>
+                          <p className="mt-1 text-[12px] leading-5 text-muted-foreground">
+                            {entry.result_text}
+                          </p>
+                          {entry.lucky_numbers ? (
+                            <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                              Lucky: {entry.lucky_numbers}
+                            </p>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </PanelBody>
               </Panel>

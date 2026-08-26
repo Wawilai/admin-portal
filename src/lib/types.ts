@@ -102,6 +102,63 @@ export interface PromoCodeRow {
   active: boolean;
 }
 
+export interface ReferralRow {
+  referred_user_id: string;
+  inviter_user_id: string;
+  referral_code: string;
+  claimed_at: string;
+  premium_awarded_at: string | null;
+  inviter_burst_count: number;
+  flagged: boolean;
+}
+
+export interface ReferralTree {
+  user_id: string;
+  referral_code: string | null;
+  invited_by: {
+    inviter_user_id: string;
+    referral_code: string;
+    claimed_at: string;
+  } | null;
+  referred_users: Array<{
+    referred_user_id: string;
+    claimed_at: string;
+    premium_awarded_at: string | null;
+  }>;
+}
+
+export interface DreamHistoryEntry {
+  id: number;
+  dream_text: string;
+  result_text: string;
+  lucky_numbers: string;
+  locale: string;
+  created_at: string;
+}
+
+export interface FcmInventory {
+  stale_days: number;
+  by_platform: Array<{ platform: string; total: number; stale: number }>;
+  total_devices: number;
+  total_stale: number;
+}
+
+export interface NotificationAudience {
+  audience: string;
+  device_count: number;
+}
+
+export interface NotificationCampaign {
+  id: number;
+  title: string;
+  body: string;
+  audience: string;
+  sent_by: string;
+  success: boolean;
+  error_message: string | null;
+  created_at: string;
+}
+
 export interface AiConfig {
   currentModel: string;
   availableModels: string[];
